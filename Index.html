@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado Interativo - EFETIVA DOCENTES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .efetiva-blue { color: #0963B5; }
+        .efetiva-teal { color: #26bebb; }
+        .efetiva-blue-bg { background-color: #0963B5; }
+        .efetiva-teal-bg { background-color: #26bebb; }
+
+        .question-nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .q-unanswered { background-color: #e2e8f0; }
+        .q-unanswered:hover { background-color: #cbd5e1; }
+        .q-current { background-color: #0963B5; color: white; transform: scale(1.1); box-shadow: 0 4px 14px 0 rgba(9, 99, 181, 0.39); }
+        .q-correct { background-color: #22c55e; color: white; }
+        .q-incorrect { background-color: #ef4444; color: white; }
+        .q-skipped { background-color: #f59e0b; color: white; }
+
+        .option-item { transition: all 0.2s ease-in-out; border-width: 2px; }
+        .option-unselected { border-color: #e2e8f0; }
+        .option-unselected:hover { border-color: #0963B5; background-color: #eff6ff; }
+        .option-selected { border-color: #0963B5; background-color: #dbeafe; }
+        .option-correct { border-color: #22c55e; background-color: #dcfce7; }
+        .option-incorrect { border-color: #ef4444; background-color: #fee2e2; }
+        .disabled-options .option-item { pointer-events: none; }
+        .strikethrough .option-text { text-decoration: line-through; color: #9ca3af; }
+
+        #highlighter-palette {
+            position: absolute;
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 8px;
+            z-index: 100;
+            align-items: center;
+        }
+        .highlight-yellow { background-color: #fef08a; }
+        .highlight-pink { background-color: #fbcfe8; }
+        .highlight-blue { background-color: #bfdbfe; }
+        .highlight-green { background-color: #bbf7d0; }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto p-4 max-w-5xl">
+        
+        <div id="start-screen" class="text-center p-4 sm:p-8">
+            <h1 class="text-4xl sm:text-5xl font-bold mb-4">
+                <span class="efetiva-blue">EFETIVA</span>
+                <span class="efetiva-teal">DOCENTES</span>
+            </h1>
+            <p class="text-2xl font-semibold text-gray-700 mt-2">Simulado - Didática e História da Educação</p>
+            <div class="max-w-md mx-auto bg-white mt-8 p-6 sm:p-8 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Identificação do Aluno</h2>
+                <form id="start-form" class="space-y-4">
+                    <div>
+                        <label for="student-name" class="block text-left font-medium text-gray-700 mb-1">Nome Completo</label>
+                        <input type="text" id="student-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome completo" required>
+                    </div>
+                    <div>
+                        <label for="student-email" class="block text-left font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="student-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
+                    </div>
+                    <div class="pt-4">
+                        <label class="block text-left font-medium text-gray-700 mb-2">Deseja usar um temporizador?</label>
+                        <div class="flex gap-4">
+                            <button type="button" id="timer-yes" class="flex-1 bg-gray-200 py-2 rounded-md font-semibold">Sim</button>
+                            <button type="button" id="timer-no" class="flex-1 bg-blue-600 text-white py-2 rounded-md font-semibold">Não</button>
+                        </div>
+                    </div>
+                    <div id="timer-config" class="hidden pt-4">
+                        <label for="timer-minutes" class="block text-left font-medium text-gray-700 mb-1">Tempo em minutos:</label>
+                        <input type="number" id="timer-minutes" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" value="30" min="1">
+                    </div>
+                    <button type="submit" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">Iniciar Simulado</button>
+                </form>
+            </div>
+        </div>
+
+        <main id="quiz-dashboard" class="hidden">
+            <header class="text-center mb-6">
+                <div class="flex justify-between items-center">
+                    <div></div>
+                    <div class="flex-1">
+                        <h1 id="quiz-title" class="text-2xl sm:text-3xl font-bold efetiva-blue"></h1>
+                        <p id="quiz-themes" class="text-lg text-gray-600 mt-1"></p>
+                    </div>
+                    <div id="timer-display" class="text-2xl font-bold efetiva-blue bg-white px-4 py-2 rounded-lg shadow-md"></div>
+                </div>
+            </header>
+            <div id="question-navigation" class="flex flex-wrap justify-center gap-2 mb-6 p-4 bg-white rounded-lg shadow-md"></div>
+
+            <div id="quiz-area" class="relative bg-white rounded-lg shadow-md p-6 md:p-8 mb-6">
+                <div id="highlighter-palette" class="flex space-x-2">
+                    <button class="w-6 h-6 rounded-full bg-yellow-200 border border-gray-300" data-color="highlight-yellow"></button>
+                    <button class="w-6 h-6 rounded-full bg-pink-200 border border-gray-300" data-color="highlight-pink"></button>
+                    <button class="w-6 h-6 rounded-full bg-blue-200 border border-gray-300" data-color="highlight-blue"></button>
+                    <button class="w-6 h-6 rounded-full bg-green-200 border border-gray-300" data-color="highlight-green"></button>
+                    <button id="remove-highlight-btn" class="w-6 h-6 rounded-full bg-gray-300 border border-gray-400 flex items-center justify-center text-red-600 font-bold">X</button>
+                </div>
+                <div id="question-content"></div>
+            </div>
+
+            <div id="navigation-controls" class="flex justify-between items-center px-2">
+                <button id="prev-btn" class="efetiva-blue-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Anterior</button>
+                <div class="flex gap-4">
+                     <button id="check-btn" class="efetiva-blue-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Verificar</button>
+                     <button id="next-btn" class="efetiva-teal-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Avançar</button>
+                </div>
+            </div>
+             <div class="text-center mt-8">
+                <button id="finish-btn" class="bg-gray-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-gray-800 transition-opacity">
+                    Finalizar Simulado
+                </button>
+            </div>
+        </main>
+        
+        <div id="final-screen" class="hidden text-center p-8 bg-white rounded-lg shadow-xl">
+            <h2 class="text-4xl font-bold efetiva-blue mb-4">Desempenho Final</h2>
+            <div class="md:flex md:items-center md:gap-8">
+                <div class="chart-container relative h-64 w-64 mx-auto mb-6 md:mb-0">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+                <div class="text-left flex-1">
+                    <p id="score-text" class="text-2xl font-semibold text-gray-800 mb-4"></p>
+                    <p id="final-message" class="text-lg text-gray-600 mb-8"></p>
+                    <button onclick="location.reload()" class="w-full efetiva-blue-bg text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                        Refazer Simulado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const simuladoNumero = 2;
+        const simuladoAcronym = "PND";
+        const quizData = [
+            {
+                questionNumber: 1,
+                baseText: “A Escola Nova não foi um movimento homogêneo. (...) O que unia essas correntes era a oposição à escola tradicional, verbalista e autoritária, e a defesa de uma educação centrada no aluno, na atividade e na vida em sociedade, buscando formar um indivíduo para uma sociedade democrática.”,
+                source: "SAVIANI, Dermeval. História das Ideias Pedagógicas no Brasil. Autores Associados, 2007.",
+                enunciado: A partir da análise de Saviani, o ideário escolanovista, apesar de suas múltiplas vertentes, representou uma viragem paradigmática na história da educação brasileira. Uma prática didática coerente com o núcleo desse ideário seria:,
+                options: [
+                    "A organização de projetos de pesquisa que, partindo de um problema prático da comunidade, mobilizam diferentes áreas do conhecimento de forma integrada.",
+                    "A manutenção de aulas expositivas, porém com o uso de recursos tecnológicos para torná-las mais dinâmicas e atrativas aos jovens.",
+                    "A implementação de um sistema de avaliação classificatória que estimule a competição entre os alunos, preparando-os para os desafios da vida adulta.",
+                    "A ênfase na disciplina e no silêncio em sala de aula, como condição indispensável para a transmissão eficaz do conhecimento pelo professor.",
+                    "A adoção de um currículo único e enciclopédico, garantindo que todos os alunos tenham acesso ao mesmo repertório cultural canónico."
+                ],
+                correctAnswerIndex: 0,
+                justification: <strong>Justificativa:</strong> O cerne da Escola Nova era a superação da passividade do aluno e da fragmentação do saber. A aprendizagem por projetos que partem da experiência e da vida em sociedade (problema da comunidade) é a prática que melhor encarna os princípios de atividade, centralidade do aluno e integração do conhecimento defendidos pelo movimento.
+            },
+            {
+                questionNumber: 2,
+                baseText: “As metodologias ativas são estratégias de ensino que colocam o aluno como protagonista e responsável pelo seu processo de aprendizagem. O professor assume o papel de mediador e facilitador, criando situações e desafios que estimulem o pensamento crítico, a colaboração e a resolução de problemas.”,
+                source: "MORAN, José. Metodologias Ativas para uma Aprendizagem Mais Profunda. (Adaptado).",
+                enunciado: `A partir da concepção de José Moran, analise as seguintes práticas didáticas:
+
+I. O professor inicia a aula com uma situação-problema complexa, e os alunos, em grupo, devem pesquisar e propor soluções.
+II. O professor utiliza a técnica da sala de aula invertida, na qual os alunos estudam o conteúdo básico em casa e usam o tempo da aula para atividades práticas e discussões.
+III. O professor realiza uma aula expositiva de 50 minutos, na qual apresenta todo o conteúdo, e os alunos devem copiar as informações para estudar para a prova.
+IV. O professor organiza um debate regrado sobre um tema polémico, atuando como mediador e incentivando a argumentação fundamentada.
+
+São consideradas metodologias ativas as práticas descritas em:`,
+                options: ["III, apenas.", "I e II, apenas.", "I, II e IV, apenas.", "II e III, apenas.", "IV, apenas."],
+                correctAnswerIndex: 2,
+                justification: <strong>Justificativa:</strong> As práticas I (Aprendizagem Baseada em Problemas), II (Sala de Aula Invertida) e IV (Debate) colocam o aluno numa posição ativa de pesquisa, colaboração e construção do conhecimento, com o professor a atuar como mediador, características centrais das metodologias ativas. A prática III representa o modelo tradicional de transmissão, onde o aluno é um receptor passivo.
+            },
+            {
+                questionNumber: 3,
+                baseText: Estudo de Caso: A professora Laura, ao lecionar sobre a Grécia Antiga para o 7º ano, decide ir além do livro didático. Ela divide a turma em "cidades-estado" (grupos) e lança um desafio: cada grupo deve criar um pequeno vídeo ou uma apresentação teatral representando um aspeto da sua cidade (democracia em Atenas, militarismo em Esparta, etc.). Durante o processo, os alunos precisam de pesquisar, escrever roteiros, criar cenários e, ao final, apresentar o seu trabalho aos colegas, que atuam como "embaixadores" de outras cidades.,
+                source: "Estudo de Caso",
+                enunciado: A metodologia utilizada pela professora Laura, que combina pesquisa, produção criativa e colaboração, é um exemplo de como a didática pode:,
+                options: [
+                    "Substituir o rigor histórico pela criatividade, arriscando a precisão conceitual dos conteúdos.",
+                    "Transformar um conteúdo histórico em uma experiência de aprendizagem significativa e engajadora, mobilizando múltiplas competências.",
+                    "Aumentar a carga de trabalho dos alunos com atividades extracriculares que pouco contribuem para a avaliação formal.",
+                    "Seguir uma abordagem construtivista radical, na qual o professor se abstém de qualquer intervenção ou orientação.",
+                    "Implementar uma forma de avaliação classificatória, comparando a qualidade dos vídeos entre os grupos."
+                ],
+                correctAnswerIndex: 1,
+                justification: <strong>Justificativa:</strong> A professora utiliza uma metodologia ativa (aprendizagem baseada em projetos/dramatização) que transforma a relação dos alunos com o saber. Em vez de receberem passivamente a informação, eles precisam de se apropriar dela para criar algo novo. Isso gera engajamento, desenvolve competências de pesquisa, comunicação e colaboração, e torna a aprendizagem mais duradoura e significativa.
+            },
+            {
+                questionNumber: 4,
+                baseText: “A educação jesuítica, implantada no Brasil Colônia com a Ratio Studiorum, tinha como principal finalidade a conversão dos gentios e a formação das elites coloniais. Seu método era marcadamente humanista-religioso, baseado na retórica, na memorização e na disciplina rígida, visando a moldar o espírito e a conduta segundo os preceitos da fé católica.”,
+                source: "ARANHA, Maria Lúcia de Arruda. História da Educação e da Pedagogia: Geral e Brasil. Moderna, 2006.",
+                enunciado: Considerando as características da pedagogia jesuítica descritas por Aranha, é correto afirmar que o seu modelo didático:,
+                options: [
+                    "Antecipava os ideais da Escola Nova ao promover a autonomia e a liberdade de pensamento dos educandos.",
+                    "Era centrado no professor e no conteúdo, utilizando a repetição e a emulação como principais estratégias para a formação moral e intelectual do aluno.",
+                    "Tinha um caráter pragmático, visando principalmente à formação de mão de obra qualificada para a colónia.",
+                    "Promovia a indisciplina ao valorizar excessivamente os debates e as discussões em sala de aula.",
+                    "Era laico e científico, separando claramente a instrução da formação religiosa."
+                ],
+                correctAnswerIndex: 1,
+                justification: <strong>Justificativa:</strong> A Ratio Studiorum representava um método didático altamente estruturado, centrado na autoridade do mestre e na memorização de textos clássicos e religiosos. A disciplina rígida e a repetição (exercícios de repetição, declamação) eram ferramentas para inculcar os valores e conhecimentos considerados verdadeiros, o que se opõe a uma pedagogia centrada no aluno ou no pensamento crítico.
+            },
+            {
+                questionNumber: 5,
+                baseText: “A sala de aula invertida (flipped classroom) é uma abordagem que reorganiza o tempo de aula para focar na aprendizagem ativa. Não se trata apenas de 'passar vídeos para casa', mas de uma mudança pedagógica na qual o professor deixa de ser o expositor principal para se tornar um tutor, um mediador de discussões e um orientador de projetos.”,
+                source: "BERGMANN, Jonathan; SAMS, Aaron. Sala de Aula Invertida: Uma metodologia ativa de aprendizagem. LTC, 2016.",
+                enunciado: `Uma implementação bem-sucedida da sala de aula invertida exige uma mudança significativa no planeamento do professor. Avalie as seguintes afirmações sobre essa mudança:
+
+I. O planeamento do professor deve focar menos na preparação da sua exposição oral e mais no desenho de atividades de aplicação, colaboração e resolução de problemas para o tempo em sala de aula.
+II. A curadoria de materiais de qualidade para o estudo prévio dos alunos (vídeos, textos, podcasts) torna-se uma parte essencial do planeamento didático.
+III. A avaliação deve continuar focada na capacidade do aluno de reproduzir o conteúdo do vídeo, por meio de testes de memorização.
+IV. O tempo em sala de aula deve ser usado para que o professor repita a mesma exposição do vídeo, para garantir que todos entendam.
+
+Estão corretas apenas as assertivas:`,
+                options: ["I e II.", "III e IV.", "I, II e IV.", "II e III.", "I e IV."],
+                correctAnswerIndex: 0,
+                justification: <strong>Justificativa:</strong> O sucesso da sala de aula invertida depende da qualidade da curadoria do material prévio (II) e, fundamentalmente, da transformação do tempo em sala num espaço de aprendizagem ativa (I). As afirmações III e IV representam erros comuns que descaracterizam a metodologia, pois mantêm a lógica da pedagogia tradicional (foco na memorização e na exposição do professor), que a abordagem visa superar.
+            },
+            {
+                questionNumber: 6,
+                baseText: “A pedagogia da pergunta, em oposição à pedagogia da resposta, entende que o conhecimento não começa com uma resposta pronta, mas com a admiração, com o espanto, com o problema. Ensinar não é dar respostas, mas ajudar o aluno a aprimorar suas perguntas.”,
+                source: "FREIRE, Paulo; FAUNDEZ, Antonio. Por uma Pedagogia da Pergunta. Paz e Terra, 2011.",
+                enunciado: Um professor que inicia a sua aula sobre o ciclo da água não com uma explicação, mas com a pergunta "De onde vem a água da chuva e para onde ela vai?", e utiliza as hipóteses dos alunos como ponto de partida para a investigação, está a praticar uma didática coerente com:,
+                options: [
+                    "Uma abordagem tecnicista, que parte de um pré-teste para medir os conhecimentos dos alunos.",
+                    "A pedagogia da pergunta, que vê a curiosidade e a problematização como o motor da aprendizagem.",
+                    "Uma metodologia expositiva-dialogada, na qual o professor faz perguntas retóricas para introduzir o conteúdo.",
+                    "Uma estratégia de avaliação diagnóstica, cujo único fim é verificar o que os alunos já sabem.",
+                    "Uma prática espontaneísta, que demonstra falta de planeamento por parte do professor."
+                ],
+                correctAnswerIndex: 1,
+                justification: <strong>Justificativa:</strong> A pedagogia da pergunta, defendida por Freire e Faundez, valoriza o ato de perguntar como o início do processo de conhecimento. O professor, nesse caso, não se posiciona como o detentor das respostas, mas como um provocador, um mediador que ajuda os alunos a transformarem a sua curiosidade ingénua em uma curiosidade epistemológica, ou seja, em uma busca por respostas mais elaboradas.
+            },
+            {
+                questionNumber: 7,
+                baseText: Estudo de Caso: Uma escola pública, durante a Semana da Consciência Negra, em vez de realizar apenas apresentações folclóricas, propõe um projeto interdisciplinar. A professora de História trabalha com as teorias do racismo científico do século XIX; a de Sociologia discute o racismo estrutural no Brasil contemporâneo; a de Artes analisa a representação do negro na arte; e a de Língua Portuguesa estuda autores da literatura negro-brasileira. O projeto culmina num seminário organizado pelos alunos.,
+                source: "Estudo de Caso",
+                enunciado: Esta abordagem didática, que trata um tema social complexo de forma aprofundada e por múltiplos olhares, é um exemplo de:,
+                options: [
+                    "Uma prática de multiculturalismo liberal, que se limita a celebrar a diversidade de forma harmoniosa.",
+                    "Uma metodologia de ensino disciplinar, na qual cada professor aborda o tema de forma isolada.",
+                    "Uma didática crítica e interdisciplinar, que busca superar a fragmentação do conhecimento e promover uma reflexão profunda sobre as relações étnico-raciais.",
+                    "Um projeto temático que, embora relevante, se afasta dos conteúdos essenciais previstos na Base Nacional Comum Curricular.",
+                    "Uma abordagem de ensino por projetos que foca mais no ativismo político do que na aprendizagem de conteúdos."
+                ],
+                correctAnswerIndex: 2,
+                justification: <strong>Justificativa:</strong> A prática descrita supera o multiculturalismo "de fachada" e adota uma postura crítica, ao analisar as estruturas e a história do racismo. Além disso, ela é claramente interdisciplinar, pois mobiliza diferentes áreas do conhecimento de forma articulada para compreender um fenómeno complexo, alinhando-se com uma didática que visa a formação para a cidadania crítica.
+            },
+            {
+                questionNumber: 8,
+                baseText: “As reformas educacionais pombalinas, na segunda metade do século XVIII, representaram a primeira grande intervenção do Estado na educação brasileira. Ao expulsar os jesuítas, o Estado assumiu para si a tarefa de instruir, criando as 'aulas régias'. No entanto, a falta de um sistema articulado e de professores preparados resultou numa instrução fragmentada e pouco eficaz.”,
+                source: "SAVIANI, Dermeval. Da Nova LDB ao Novo Plano Nacional de Educação. Autores Associados, 2014.",
+                enunciado: A análise de Saviani sobre as reformas pombalinas permite inferir que, do ponto de vista da organização do ensino, a sua principal consequência foi:,
+                options: [
+                    "A democratização do acesso ao ensino, que se tornou obrigatório para toda a população livre da colónia.",
+                    "A consolidação de um sistema de ensino laico e centralizado, com uma estrutura curricular bem definida e unificada.",
+                    "A introdução de uma metodologia de ensino inovadora, baseada nos princípios do Iluminismo e focada nas ciências da natureza.",
+                    "A desarticulação do sistema de ensino existente, substituindo uma estrutura orgânica (a rede de colégios jesuítas) por aulas avulsas e isoladas, o que representou uma precarização da oferta educacional.",
+                    "A imediata valorização do magistério, com a criação de um plano de carreira e salários atrativos para os professores régios."
+                ],
+                correctAnswerIndex: 3,
+                justification: <strong>Justificativa:</strong> Embora a intenção de Pombal fosse modernizar e laicizar o ensino, a sua reforma, na prática, desmantelou a única rede de ensino estruturada que existia (a jesuítica) sem conseguir criar um sistema com a mesma capilaridade e organização. As aulas régias eram isoladas e careciam de um projeto pedagógico unificado, o que levou a uma desorganização do ensino colonial.
+            },
+            {
+                questionNumber: 9,
+                baseText: “A aprendizagem baseada em problemas (PBL - Problem-Based Learning) é uma metodologia na qual os alunos, em pequenos grupos, deparam-se com um problema complexo e mal estruturado, para o qual não têm conhecimento prévio suficiente. O problema serve como estímulo para que identifiquem suas necessidades de aprendizagem e busquem o conhecimento necessário para resolvê-lo.”,
+                source: "BOROCHOVITCH, Evely; BZUNECK, José Aloysio (Orgs.). A motivação do aluno. Vozes, 2009.",
+                enunciado: Diferentemente de um exercício de aplicação, no qual o aluno primeiro aprende a teoria para depois aplicá-la, na PBL, o problema:,
+                options: [
+                    "É apresentado no final do processo, como forma de avaliar se a teoria foi bem compreendida.",
+                    "É um exercício fechado, com uma única resposta correta, que serve para treinar um algoritmo específico.",
+                    "Vem antes da teoria, funcionando como o gatilho que gera a necessidade de aprender e dá sentido ao estudo.",
+                    "É sempre um problema hipotético, sem conexão com a realidade, para estimular a imaginação.",
+                    "É resolvido pelo professor, que o utiliza como um exemplo para ilustrar a sua exposição teórica."
+                ],
+                correctAnswerIndex: 2,
+                justification: <strong>Justificativa:</strong> Esta é a principal inversão didática da PBL. O problema não é um teste para ver se o aluno aprendeu, mas o ponto de partida de todo o processo. É a complexidade do problema que mobiliza os alunos a definirem os seus objetivos de aprendizagem e a buscarem ativamente o conhecimento, tornando a aprendizagem mais significativa e contextualizada.
+            },
+            {
+                questionNumber: 10,
+                baseText: “Não há saber mais ou saber menos: há saberes diferentes. O respeito aos saberes dos educandos é a primeira condição para que o educador possa, com eles, avançar na construção de um novo conhecimento. Partir do 'saber de experiência feito' para superá-lo com o saber mais rigoroso e sistematizado é o desafio da prática educativa.”,
+                source: "FREIRE, Paulo. Pedagogia da Autonomia: Saberes necessários à prática educativa. Paz e Terra, 1996.",
+                enunciado: A concepção didática de Paulo Freire, expressa no texto, fundamenta uma prática que:,
+                options: [
+                    "Valida o senso comum como conhecimento final, abdicando do papel da escola de ensinar o saber sistematizado.",
+                    "Valoriza os saberes dos alunos como ponto de partida do processo pedagógico, mas busca, através do diálogo, superá-los em direção a um conhecimento mais crítico e elaborado.",
+                    "Propõe uma metodologia de ensino que ignora os saberes prévios para evitar a contaminação do conhecimento científico.",
+                    "Estabelece uma hierarquia clara, na qual o saber do professor é o único legítimo no espaço da sala de aula.",
+                    "Limita-se a uma troca de experiências, sem a intencionalidade de ensinar conteúdos curriculares."
+                ],
+                correctAnswerIndex: 1,
+                justification: <strong>Justificativa:</strong> Freire não propõe uma adesão acrítica ao saber popular, nem a sua negação. A sua didática é dialógica: parte-se do saber que o aluno traz da sua vivência ("saber de experiência feito") e, através da problematização e do diálogo com o saber sistematizado (trazido pelo educador), busca-se a superação de uma consciência ingénua para uma consciência crítica.
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const startForm = document.getElementById('start-form');
+            const startScreen = document.getElementById('start-screen');
+            const quizDashboard = document.getElementById('quiz-dashboard');
+            const finalScreen = document.getElementById('final-screen');
+            const questionNav = document.getElementById('question-navigation');
+            const questionContent = document.getElementById('question-content');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const checkBtn = document.getElementById('check-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            const quizTitleElement = document.getElementById('quiz-title');
+            const quizThemesElement = document.getElementById('quiz-themes');
+            const timerDisplay = document.getElementById('timer-display');
+            const timerYesBtn = document.getElementById('timer-yes');
+            const timerNoBtn = document.getElementById('timer-no');
+            const timerConfig = document.getElementById('timer-config');
+            const highlighterPalette = document.getElementById('highlighter-palette');
+            
+            let currentQuestionIndex = 0;
+            let userAnswers = new Array(quizData.length).fill(null);
+            let verifiedAnswers = new Array(quizData.length).fill(false);
+            let questionStates = quizData.map(q => ({
+                baseTextHTML: q.baseText,
+                enunciadoHTML: q.enunciado
+            }));
+            let scoreChart = null;
+            let timerInterval = null;
+            let timeRemaining = 0;
+            let useTimer = false;
+
+            timerYesBtn.addEventListener('click', () => {
+                useTimer = true;
+                timerConfig.classList.remove('hidden');
+                timerYesBtn.classList.add('bg-blue-600', 'text-white');
+                timerNoBtn.classList.remove('bg-blue-600', 'text-white');
+                timerNoBtn.classList.add('bg-gray-200');
+            });
+
+            timerNoBtn.addEventListener('click', () => {
+                useTimer = false;
+                timerConfig.classList.add('hidden');
+                timerNoBtn.classList.add('bg-blue-600', 'text-white');
+                timerYesBtn.classList.remove('bg-blue-600', 'text-white');
+                timerYesBtn.classList.add('bg-gray-200');
+            });
+
+            startForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                startScreen.style.display = 'none';
+                quizDashboard.classList.remove('hidden');
+                quizTitleElement.innerHTML = Simulado N° ${simuladoNumero} - ${simuladoAcronym};
+                if(quizThemesElement) quizThemesElement.textContent = 'Didática, Metodologias Ativas e História da Educação';
+
+                if (useTimer) {
+                    const minutes = parseInt(document.getElementById('timer-minutes').value, 10);
+                    startTimer(minutes);
+                } else {
+                    timerDisplay.style.display = 'none';
+                }
+                init();
+            });
+
+            function startTimer(minutes) {
+                timeRemaining = minutes * 60;
+                timerDisplay.style.display = 'block';
+                updateTimerDisplay();
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    if (timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        alert('O tempo acabou!');
+                        showFinalScreen();
+                    }
+                }, 1000);
+            }
+
+            function updateTimerDisplay() {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDisplay.textContent = ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')};
+            }
+
+            function init() {
+                renderNav();
+                renderQuestion(0);
+                setupHighlighter();
+            }
+
+            function renderNav() {
+                questionNav.innerHTML = '';
+                quizData.forEach((_, index) => {
+                    const navItem = document.createElement('button');
+                    navItem.textContent = index + 1;
+                    navItem.className = 'w-8 h-8 rounded-full font-semibold question-nav-item';
+                    navItem.onclick = () => {
+                        currentQuestionIndex = index;
+                        renderQuestion(index);
+                    };
+                    questionNav.appendChild(navItem);
+                });
+                updateNavStatus();
+            }
+
+            function updateNavStatus() {
+                const navItems = questionNav.children;
+                for (let i = 0; i < navItems.length; i++) {
+                    navItems[i].classList.remove('q-current', 'q-unanswered', 'q-correct', 'q-incorrect', 'q-skipped');
+                    if (verifiedAnswers[i]) {
+                        navItems[i].classList.add(userAnswers[i] === quizData[i].correctAnswerIndex ? 'q-correct' : 'q-incorrect');
+                    } else if (userAnswers[i] !== null) {
+                        navItems[i].classList.add('q-skipped');
+                    }
+                    else {
+                        navItems[i].classList.add('q-unanswered');
+                    }
+                    if (i === currentQuestionIndex) {
+                        navItems[i].classList.add('q-current');
+                    }
+                }
+            }
+
+            function renderQuestion(index) {
+                const q = quizData[index];
+                const state = questionStates[index];
+                const isVerified = verifiedAnswers[index];
+
+                let optionsHTML = q.options.map((option, i) => {
+                    let optionClass = 'option-unselected';
+                    if (isVerified) {
+                        if (i === q.correctAnswerIndex) optionClass = 'option-correct';
+                        else if (i === userAnswers[index]) optionClass = 'option-incorrect';
+                    } else if (i === userAnswers[index]) {
+                        optionClass = 'option-selected';
+                    }
+                    return `
+                        <div class="option-item flex items-center p-4 rounded-lg cursor-pointer ${optionClass}" data-index="${i}">
+                            <span class="strikethrough-btn text-gray-400 font-bold mr-4 cursor-pointer hover:text-red-500 text-lg">X</span>
+                            <span class="flex-1 option-text">${String.fromCharCode(65 + i)}) ${option}</span>
+                        </div>`;
+                }).join('');
+
+                questionContent.innerHTML = `
+                    <h2 class="text-xl font-bold mb-2">Questão ${q.questionNumber}</h2>
+                    <div id="base-text-container" class="text-base text-gray-600 italic bg-gray-100 p-4 rounded-md mb-4">
+                        <p class="mb-2">${state.baseTextHTML}</p>
+                        <p class="text-sm text-right"><strong>Fonte:</strong> ${q.source}</p>
+                    </div>
+                    <p id="enunciado-container" class="enunciado my-4 text-gray-800 text-lg whitespace-pre-wrap">${state.enunciadoHTML}</p>
+                    <div class="options-container space-y-3 ${isVerified ? 'disabled-options' : ''}">${optionsHTML}</div>
+                    <div id="justification-area" class="mt-6 p-4 bg-amber-100 border-l-4 border-amber-500 text-amber-800 rounded-r-md ${isVerified ? '' : 'hidden'}">
+                        ${isVerified ? q.justification : ''}
+                    </div>
+                `;
+
+                if (!isVerified) {
+                    questionContent.querySelectorAll('.option-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            if (e.target.classList.contains('strikethrough-btn')) {
+                                e.currentTarget.classList.toggle('strikethrough');
+                            } else {
+                                userAnswers[index] = parseInt(item.dataset.index);
+                                renderQuestion(index);
+                            }
+                        });
+                    });
+                }
+                updateNavButtons();
+                updateNavStatus();
+            }
+            
+            function setupHighlighter() {
+                const quizArea = document.getElementById('quiz-area');
+                let currentRange;
+
+                document.addEventListener('selectionchange', () => {
+                    const selection = window.getSelection();
+                    if (selection.toString().length > 0 && quizArea.contains(selection.anchorNode)) {
+                        activeRange = selection.getRangeAt(0);
+                        const rect = activeRange.getBoundingClientRect();
+                        const containerRect = quizArea.getBoundingClientRect();
+                        showPalette(rect.left - containerRect.left, rect.top - containerRect.top, false);
+                    } else {
+                        setTimeout(() => {
+                            if (window.getSelection().toString().length === 0) {
+                                hidePalette();
+                            }
+                        }, 200);
+                    }
+                });
+
+                quizArea.addEventListener('click', (e) => {
+                    let target = e.target;
+                    if (target.tagName === 'SPAN' && target.className.includes('highlight-')) {
+                        const rect = target.getBoundingClientRect();
+                        const containerRect = quizArea.getBoundingClientRect();
+                        showPalette(rect.left - containerRect.left, rect.top - containerRect.top, true, target);
+                    }
+                });
+
+                function showPalette(x, y, isRemoval, targetSpan = null) {
+                    highlighterPalette.style.left = ${x}px;
+                    highlighterPalette.style.top = ${y - highlighterPalette.offsetHeight - 5}px;
+                    highlighterPalette.style.display = 'flex';
+                    highlighterPalette.querySelector('#remove-highlight-btn').style.display = isRemoval ? 'flex' : 'none';
+                    highlighterPalette.dataset.targetSpan = isRemoval ? 'true' : 'false';
+                    if(isRemoval) {
+                         highlighterPalette.targetSpan = targetSpan;
+                    }
+                }
+
+                function hidePalette() {
+                    highlighterPalette.style.display = 'none';
+                }
+
+                highlighterPalette.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (button.id === 'remove-highlight-btn') {
+                            const targetSpan = highlighterPalette.targetSpan;
+                            if (targetSpan) {
+                                const parent = targetSpan.parentNode;
+                                while (targetSpan.firstChild) {
+                                    parent.insertBefore(targetSpan.firstChild, targetSpan);
+                                }
+                                parent.removeChild(targetSpan);
+                                parent.normalize();
+                            }
+                        } else {
+                            const colorClass = button.dataset.color;
+                            if (activeRange) {
+                                const span = document.createElement('span');
+                                span.className = colorClass;
+                                try {
+                                    span.appendChild(activeRange.extractContents());
+                                    activeRange.insertNode(span);
+                                } catch (err) {
+                                    console.error("Could not highlight:", err);
+                                }
+                            }
+                        }
+                        
+                        saveHighlights();
+                        window.getSelection().removeAllRanges();
+                        hidePalette();
+                    });
+                });
+            }
+
+            function saveHighlights() {
+                const baseTextContainer = document.getElementById('base-text-container').querySelector('p');
+                const enunciadoContainer = document.getElementById('enunciado-container');
+                if (baseTextContainer) {
+                    questionStates[currentQuestionIndex].baseTextHTML = baseTextContainer.innerHTML;
+                }
+                if (enunciadoContainer) {
+                    questionStates[currentQuestionIndex].enunciadoHTML = enunciadoContainer.innerHTML;
+                }
+            }
+
+            checkBtn.addEventListener('click', () => {
+                const index = currentQuestionIndex;
+                if (userAnswers[index] === null) {
+                    alert('Por favor, selecione uma resposta.');
+                    return;
+                }
+                verifiedAnswers[index] = true;
+                renderQuestion(index);
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    renderQuestion(currentQuestionIndex);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentQuestionIndex < quizData.length - 1) {
+                    currentQuestionIndex++;
+                    renderQuestion(currentQuestionIndex);
+                } else {
+                    showFinalScreen();
+                }
+            });
+
+            function updateNavButtons() {
+                prevBtn.style.visibility = currentQuestionIndex === 0 ? 'hidden' : 'visible';
+                checkBtn.style.display = verifiedAnswers[currentQuestionIndex] ? 'none' : 'inline-block';
+            }
+
+            finishBtn.addEventListener('click', () => {
+                showFinalScreen();
+            });
+            
+            function showFinalScreen() {
+                clearInterval(timerInterval);
+                quizDashboard.style.display = 'none';
+                finalScreen.classList.remove('hidden');
+
+                const correctCount = userAnswers.filter((ans, i) => verifiedAnswers[i] && ans === quizData[i].correctAnswerIndex).length;
+                const incorrectCount = verifiedAnswers.filter((v, i) => v && userAnswers[i] !== quizData[i].correctAnswerIndex).length;
+                const unansweredCount = verifiedAnswers.filter(v => !v).length;
+                const percentage = quizData.length > 0 ? (correctCount / quizData.length) * 100 : 0;
+
+                document.getElementById('score-text').textContent = Você acertou ${correctCount} de ${quizData.length} questões.;
+                const finalMsg = document.getElementById('final-message');
+                if (percentage >= 60) {
+                    finalMsg.textContent = 'Parabéns! Você alcançou um excelente resultado e demonstrou grande conhecimento. Continue assim!';
+                } else {
+                    finalMsg.textContent = 'Não desanime! Cada simulado é um passo na sua jornada de aprendizado. Revise as questões e continue estudando!';
+                }
+
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                if(scoreChart) scoreChart.destroy();
+                scoreChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Corretas', 'Incorretas', 'Não Respondidas'],
+                        datasets: [{
+                            data: [correctCount, incorrectCount, unansweredCount],
+                            backgroundColor: ['#22c55e', '#ef4444', '#e2e8f0'],
+                            borderColor: '#f8fafc',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ${context.label}: ${context.raw};
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
