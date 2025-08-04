@@ -6,67 +6,516 @@
     <title>Simulado Interativo - EFETIVA DOCENTES</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        
+        // Configuração do Firebase (usuário precisa adicionar suas credenciais)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFFbN5zqWz4o8NR2A9uaEZZkQO6ZfL4ns",
+            authDomain: "efetiva-docentes-82b5f.firebaseapp.com",
+            projectId: "efetiva-docentes-82b5f",
+            storageBucket: "efetiva-docentes-82b5f.firebasestorage.app",
+            messagingSenderId: "699984569535",
+            appId: "1:699984569535:web:08858cd7782ceeda74120a"
+        };
+        
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.db = getFirestore(window.firebaseApp);
+        window.auth = getAuth(window.firebaseApp);
+        
+        // Exportar funções para uso global
+        window.firebaseAuth = {
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            updateProfile,
+            onAuthStateChanged,
+            signOut
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --efetiva-blue: #0963B5;
+            --efetiva-teal: #26bebb;
+            --bg-primary: #f8fafc;
+            --text-primary: #1f2937;
+            --border-color: #e2e8f0;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
         }
-        .efetiva-blue { color: #0963B5; }
-        .efetiva-teal { color: #26bebb; }
-        .efetiva-blue-bg { background-color: #0963B5; }
-        .efetiva-teal-bg { background-color: #26bebb; }
+        
+        /* Core Colors */
+        .efetiva-blue { color: var(--efetiva-blue); }
+        .efetiva-teal { color: var(--efetiva-teal); }
+        .efetiva-blue-bg { background-color: var(--efetiva-blue); }
+        .efetiva-teal-bg { background-color: var(--efetiva-teal); }
+
+        /* Enhanced Navigation */
+        .question-nav-enhanced {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+            gap: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
         .question-nav-item {
-            transition: all 0.2s ease-in-out;
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 2px solid transparent;
         }
-        .q-unanswered { background-color: #e2e8f0; }
-        .q-unanswered:hover { background-color: #cbd5e1; }
-        .q-current { background-color: #0963B5; color: white; transform: scale(1.1); box-shadow: 0 4px 14px 0 rgba(9, 99, 181, 0.39); }
-        .q-correct { background-color: #22c55e; color: white; }
-        .q-incorrect { background-color: #ef4444; color: white; }
-        .q-skipped { background-color: #f59e0b; color: white; }
 
-        .option-item { transition: all 0.2s ease-in-out; border-width: 2px; }
-        .option-unselected { border-color: #e2e8f0; }
-        .option-unselected:hover { border-color: #0963B5; background-color: #eff6ff; }
-        .option-selected { border-color: #0963B5; background-color: #dbeafe; }
-        .option-correct { border-color: #22c55e; background-color: #dcfce7; }
-        .option-incorrect { border-color: #ef4444; background-color: #fee2e2; }
+        .question-nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .q-unanswered { 
+            background-color: #e2e8f0; 
+            color: #64748b;
+        }
+        .q-unanswered:hover { 
+            background-color: #cbd5e1; 
+            transform: scale(1.05);
+        }
+        .q-current { 
+            background-color: var(--efetiva-blue); 
+            color: white; 
+            transform: scale(1.15); 
+            box-shadow: 0 8px 25px rgba(9, 99, 181, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .q-correct { 
+            background-color: #22c55e; 
+            color: white; 
+        }
+        .q-correct::after { opacity: 1; }
+        .q-incorrect { 
+            background-color: #ef4444; 
+            color: white; 
+        }
+        .q-incorrect::after { opacity: 1; }
+        .q-skipped { 
+            background-color: #f59e0b; 
+            color: white; 
+        }
+        .q-skipped::after { opacity: 1; }
+
+        /* Enhanced Options */
+        .option-item { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            border-width: 2px; 
+            position: relative;
+            overflow: hidden;
+        }
+        .option-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        .option-item:hover::before {
+            left: 100%;
+        }
+
+        .option-unselected { 
+            border-color: var(--border-color); 
+            background-color: white;
+        }
+        .option-unselected:hover { 
+            border-color: var(--efetiva-blue); 
+            background-color: #eff6ff; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(9, 99, 181, 0.15);
+        }
+        .option-selected { 
+            border-color: var(--efetiva-blue); 
+            background-color: #dbeafe; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(9, 99, 181, 0.2);
+        }
+        .option-correct { 
+            border-color: #22c55e; 
+            background-color: #dcfce7; 
+            animation: correctPulse 0.6s ease-out;
+        }
+        .option-incorrect { 
+            border-color: #ef4444; 
+            background-color: #fee2e2; 
+            animation: incorrectShake 0.6s ease-out;
+        }
         .disabled-options .option-item { pointer-events: none; }
-        .strikethrough .option-text { text-decoration: line-through; color: #9ca3af; }
+        .strikethrough .option-text { 
+            text-decoration: line-through; 
+            color: #9ca3af; 
+            opacity: 0.6;
+        }
 
+        /* Animations */
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-transition {
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Enhanced Highlighter */
         #highlighter-palette {
             position: absolute;
             display: none;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            padding: 12px;
             z-index: 100;
             align-items: center;
+            border: 1px solid #e2e8f0;
         }
+        
+        #highlighter-palette button {
+            transition: all 0.2s ease;
+        }
+        
+        #highlighter-palette button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
         .highlight-yellow { background-color: #fef08a; }
         .highlight-pink { background-color: #fbcfe8; }
         .highlight-blue { background-color: #bfdbfe; }
         .highlight-green { background-color: #bbf7d0; }
+
+        /* Loading States */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 300px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--efetiva-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--efetiva-blue);
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            animation: toastSlide 0.3s ease-out;
+        }
+
+        .toast-success { background: #22c55e; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: var(--efetiva-blue); }
+
+        @keyframes toastSlide {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Quiz Configuration */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .config-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .config-section h3 {
+            margin: 0 0 1rem 0;
+            color: var(--efetiva-blue);
+            font-size: 1.1rem;
+        }
+
+        .modern-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: white;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .modern-select:focus {
+            outline: none;
+            border-color: var(--efetiva-blue);
+            box-shadow: 0 0 0 3px rgba(9, 99, 181, 0.1);
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .diff-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: white;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .diff-btn:hover {
+            border-color: var(--efetiva-blue);
+            background: #eff6ff;
+        }
+
+        .diff-btn.active {
+            border-color: var(--efetiva-blue);
+            background: var(--efetiva-blue);
+            color: white;
+        }
+
+        .modern-slider {
+            width: 100%;
+            margin: 1rem 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border-color);
+            outline: none;
+        }
+
+        .modern-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--efetiva-blue);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .difficulty-buttons {
+                flex-direction: column;
+            }
+            
+            .question-nav-enhanced {
+                grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+                gap: 6px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="container mx-auto p-4 max-w-5xl">
         
-        <div id="start-screen" class="text-center p-4 sm:p-8">
+        <!-- Login/Register Screen -->
+        <div id="auth-screen" class="text-center p-4 sm:p-8">
             <h1 class="text-4xl sm:text-5xl font-bold mb-4">
                 <span class="efetiva-blue">EFETIVA</span>
                 <span class="efetiva-teal">DOCENTES</span>
             </h1>
-            <p class="text-2xl font-semibold text-gray-700 mt-2">Simulado - Didática e História da Educação</p>
+            <p class="text-2xl font-semibold text-gray-700 mt-2">Sistema de Simulados</p>
+            
+            <div class="max-w-md mx-auto mt-8">
+                <!-- Login Form -->
+                <div id="login-form" class="bg-white p-6 sm:p-8 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Fazer Login</h2>
+                    <form id="login-form-element" class="space-y-4">
+                        <div>
+                            <label for="login-email" class="block text-left font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="login-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-left font-medium text-gray-700 mb-1">Senha</label>
+                            <input type="password" id="login-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Sua senha" required>
+                        </div>
+                        <button type="submit" class="w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                            Entrar
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-600">Ainda não tem conta?</p>
+                        <button id="show-register" class="text-blue-600 hover:text-blue-800 font-medium">Criar Conta</button>
+                    </div>
+                    
+                    <div class="mt-4 text-center space-y-2">
+                        <button id="skip-auth" class="text-gray-500 hover:text-gray-700 text-sm">Pular Login (Modo Visitante)</button>
+                        <br>
+                        <button id="test-firebase" class="text-blue-500 hover:text-blue-700 text-xs">🔧 Testar Configuração Firebase</button>
+                    </div>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="register-form" class="hidden bg-white p-6 sm:p-8 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Criar Conta</h2>
+                    <form id="register-form-element" class="space-y-4">
+                        <div>
+                            <label for="register-name" class="block text-left font-medium text-gray-700 mb-1">Nome Completo</label>
+                            <input type="text" id="register-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome completo" required>
+                        </div>
+                        <div>
+                            <label for="register-email" class="block text-left font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="register-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
+                        </div>
+                        <div>
+                            <label for="register-password" class="block text-left font-medium text-gray-700 mb-1">Senha</label>
+                            <input type="password" id="register-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Mínimo 6 caracteres" required minlength="6">
+                        </div>
+                        <div>
+                            <label for="register-confirm-password" class="block text-left font-medium text-gray-700 mb-1">Confirmar Senha</label>
+                            <input type="password" id="register-confirm-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Digite a senha novamente" required>
+                        </div>
+                        <div class="pt-4">
+                            <label for="register-access-code" class="block text-left font-medium text-gray-700 mb-1">Código de Acesso (opcional)</label>
+                            <input type="text" id="register-access-code" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Digite se fornecido">
+                        </div>
+                        <button type="submit" class="w-full efetiva-teal-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                            Criar Conta
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-600">Já tem conta?</p>
+                        <button id="show-login" class="text-blue-600 hover:text-blue-800 font-medium">Fazer Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Identification Screen -->
+        <div id="user-screen" class="hidden text-center p-4 sm:p-8">
+            <h1 class="text-4xl sm:text-5xl font-bold mb-4">
+                <span class="efetiva-blue">EFETIVA</span>
+                <span class="efetiva-teal">DOCENTES</span>
+            </h1>
+            <p class="text-2xl font-semibold text-gray-700 mt-2">Simulado Interativo</p>
+            
             <div class="max-w-md mx-auto bg-white mt-8 p-6 sm:p-8 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Identificação do Aluno</h2>
-                <form id="start-form" class="space-y-4">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Identificação do Usuário</h2>
+                <form id="user-form" class="space-y-4">
                     <div>
                         <label for="student-name" class="block text-left font-medium text-gray-700 mb-1">Nome Completo</label>
                         <input type="text" id="student-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome completo" required>
@@ -76,18 +525,129 @@
                         <input type="email" id="student-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
                     </div>
                     <div class="pt-4">
-                        <label class="block text-left font-medium text-gray-700 mb-2">Deseja usar um temporizador?</label>
-                        <div class="flex gap-4">
-                            <button type="button" id="timer-yes" class="flex-1 bg-gray-200 py-2 rounded-md font-semibold">Sim</button>
-                            <button type="button" id="timer-no" class="flex-1 bg-blue-600 text-white py-2 rounded-md font-semibold">Não</button>
+                        <label for="access-code" class="block text-left font-medium text-gray-700 mb-1">Código de Acesso (opcional)</label>
+                        <input type="text" id="access-code" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Digite o código se fornecido">
+                    </div>
+                    <button type="submit" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                        Continuar
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Quiz Configuration Screen -->
+        <div id="config-screen" class="hidden text-center p-4 sm:p-8">
+            <h1 class="text-4xl sm:text-5xl font-bold mb-4">
+                <span class="efetiva-blue">EFETIVA</span>
+                <span class="efetiva-teal">DOCENTES</span>
+            </h1>
+            <div class="flex justify-between items-center">
+                <div class="flex-1 text-center">
+                    <p class="text-2xl font-semibold text-gray-700">Configure seu Simulado</p>
+                    <p id="welcome-message" class="text-lg text-gray-600 mt-2"></p>
+                </div>
+                <button id="logout-btn" class="hidden bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                    Sair
+                </button>
+            </div>
+            
+            <div class="max-w-4xl mx-auto mt-8">
+                <div class="config-grid">
+                    <div class="config-section">
+                        <h3>📚 Tema do Simulado</h3>
+                        <select id="topic-select" class="modern-select">
+                            <option value="didatica-geral">Didática Geral</option>
+                            <option value="historia-educacao" selected>História da Educação</option>
+                            <option value="metodologias-ativas">Metodologias Ativas</option>
+                            <option value="psicologia-educacional">Psicologia Educacional</option>
+                            <option value="avaliacao-educacional">Avaliação Educacional</option>
+                            <option value="legislacao-educacional">Legislação Educacional</option>
+                        </select>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h3>⚡ Nível de Dificuldade</h3>
+                        <div class="difficulty-buttons">
+                            <button data-level="basico" class="diff-btn">Básico</button>
+                            <button data-level="intermediario" class="diff-btn active">Intermediário</button>
+                            <button data-level="avancado" class="diff-btn">Avançado</button>
                         </div>
                     </div>
-                    <div id="timer-config" class="hidden pt-4">
-                        <label for="timer-minutes" class="block text-left font-medium text-gray-700 mb-1">Tempo em minutos:</label>
-                        <input type="number" id="timer-minutes" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" value="30" min="1">
+                    
+                    <div class="config-section">
+                        <h3>🎯 Quantidade de Questões</h3>
+                        <input type="range" id="question-count" min="5" max="30" value="10" class="modern-slider">
+                        <div class="flex justify-between text-sm text-gray-600 mt-2">
+                            <span>5</span>
+                            <span id="count-display" class="font-semibold efetiva-blue">10 questões</span>
+                            <span>30</span>
+                        </div>
                     </div>
-                    <button type="submit" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">Iniciar Simulado</button>
+                    
+                    <div class="config-section">
+                        <h3>🔄 Modo de Geração</h3>
+                        <div class="difficulty-buttons">
+                            <button id="mode-dynamic" class="diff-btn active">Dinâmico (IA)</button>
+                            <button id="mode-static" class="diff-btn">Estático</button>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">
+                            <span id="mode-description">Questões geradas por IA baseadas no tema selecionado</span>
+                        </p>
+                        <div class="mt-3">
+                            <button id="test-gemini" class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full hover:bg-purple-200 transition-colors">
+                                🧪 Testar API Gemini
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="config-section">
+                        <h3>⏱️ Configurações de Tempo</h3>
+                        <div class="difficulty-buttons mb-4">
+                            <button id="timer-yes-config" class="diff-btn">Com Tempo</button>
+                            <button id="timer-no-config" class="diff-btn active">Sem Tempo</button>
+                        </div>
+                        <div id="timer-config-advanced" class="hidden">
+                            <label for="timer-minutes-config" class="block text-left font-medium text-gray-700 mb-2">Tempo em minutos:</label>
+                            <input type="range" id="timer-minutes-config" min="10" max="120" value="30" class="modern-slider">
+                            <div class="flex justify-between text-sm text-gray-600 mt-2">
+                                <span>10 min</span>
+                                <span id="timer-display-config" class="font-semibold efetiva-blue">30 minutos</span>
+                                <span>120 min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="start-config-btn" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:opacity-90 transition-opacity text-lg">
+                    Continuar para Identificação
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quiz Confirmation Screen -->
+        <div id="start-screen" class="hidden text-center p-4 sm:p-8">
+            <h1 class="text-4xl sm:text-5xl font-bold mb-4">
+                <span class="efetiva-blue">EFETIVA</span>
+                <span class="efetiva-teal">DOCENTES</span>
+            </h1>
+            <p class="text-2xl font-semibold text-gray-700 mt-2">Pronto para Começar?</p>
+            
+            <div class="max-w-md mx-auto bg-white mt-8 p-6 sm:p-8 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Resumo do Simulado</h2>
+                
+                <div id="quiz-summary" class="space-y-4 text-left mb-6">
+                    <!-- Summary will be populated by JavaScript -->
+                </div>
+                
+                <form id="start-form" class="space-y-4">
+                    <button type="submit" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity text-lg">
+                        🚀 Iniciar Simulado
+                    </button>
                 </form>
+                
+                <button id="back-to-config" class="mt-4 w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">
+                    ← Voltar às Configurações
+                </button>
             </div>
         </div>
 
@@ -102,7 +662,7 @@
                     <div id="timer-display" class="text-2xl font-bold efetiva-blue bg-white px-4 py-2 rounded-lg shadow-md"></div>
                 </div>
             </header>
-            <div id="question-navigation" class="flex flex-wrap justify-center gap-2 mb-6 p-4 bg-white rounded-lg shadow-md"></div>
+            <div id="question-navigation" class="question-nav-enhanced mb-6 p-4 bg-white rounded-lg shadow-md"></div>
 
             <div id="quiz-area" class="relative bg-white rounded-lg shadow-md p-6 md:p-8 mb-6">
                 <div id="highlighter-palette" class="flex space-x-2">
@@ -149,7 +709,685 @@
     <script>
         const simuladoNumero = 2;
         const simuladoAcronym = "PND";
-        const quizData = [
+        
+        // Configuration for Gemini API (user needs to add their API key)
+        const GEMINI_CONFIG = {
+            apiKey: 'AIzaSyA2IeHP0QVNs8i8FtGCegHwbOzo_Bks3pM', // User needs to add API key here
+            baseURL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+        };
+
+        // Quiz Data Manager with dynamic generation capabilities
+        class QuizDataManager {
+            constructor() {
+                this.cache = new Map();
+                this.fallbackData = staticQuizData;
+            }
+
+            async getQuestions(config) {
+                const cacheKey = `${config.topic}_${config.difficulty}_${config.quantity}`;
+                
+                console.log('🔄 QuizDataManager.getQuestions called with config:', config);
+                
+                if (this.cache.has(cacheKey)) {
+                    console.log('📋 Using cached questions');
+                    return this.cache.get(cacheKey);
+                }
+
+                if (config.mode === 'dynamic' && GEMINI_CONFIG.apiKey) {
+                    console.log('🤖 Attempting to generate dynamic questions with Gemini...');
+                    console.log('🔑 API Key present:', !!GEMINI_CONFIG.apiKey);
+                    
+                    try {
+                        UIEnhancements.showToast('Gerando questões com IA...', 'info');
+                        const questions = await this.generateDynamicQuestions(config);
+                        
+                        if (questions && questions.length > 0) {
+                            console.log(`✅ Generated ${questions.length} dynamic questions successfully`);
+                            this.cache.set(cacheKey, questions);
+                            UIEnhancements.showToast(`${questions.length} questões geradas com IA!`, 'success');
+                            return questions;
+                        } else {
+                            console.warn('⚠️ No questions generated, using fallback');
+                            UIEnhancements.showToast('Falha na geração IA - usando questões estáticas', 'error');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error generating dynamic questions:', error);
+                        UIEnhancements.showToast('Erro na IA - usando questões estáticas como backup', 'error');
+                    }
+                } else {
+                    console.log('📚 Using static mode or no API key');
+                    if (config.mode === 'dynamic' && !GEMINI_CONFIG.apiKey) {
+                        UIEnhancements.showToast('API key do Gemini não configurada - usando modo estático', 'info');
+                    }
+                }
+
+                console.log('📖 Returning static questions');
+                return this.fallbackData.slice(0, config.quantity);
+            }
+
+            async generateDynamicQuestions(config) {
+                console.log('🔧 generateDynamicQuestions called with:', config);
+                
+                const topicMap = {
+                    'didatica-geral': 'Didática Geral e Teorias de Aprendizagem',
+                    'historia-educacao': 'História da Educação no Brasil e no Mundo',
+                    'metodologias-ativas': 'Metodologias Ativas de Ensino',
+                    'psicologia-educacional': 'Psicologia Educacional e Desenvolvimento',
+                    'avaliacao-educacional': 'Avaliação Educacional e Instrumentos',
+                    'legislacao-educacional': 'Legislação Educacional Brasileira'
+                };
+
+                const difficultyMap = {
+                    'basico': 'básico',
+                    'intermediario': 'intermediário',
+                    'avancado': 'avançado'
+                };
+
+                const topic = topicMap[config.topic] || config.topic;
+                const difficulty = difficultyMap[config.difficulty] || config.difficulty;
+
+                console.log(`📝 Generating ${config.quantity} questions about "${topic}" (${difficulty})`);
+
+                const prompt = `Gere exatamente ${config.quantity} questões de múltipla escolha sobre "${topic}" com nível de dificuldade ${difficulty}.
+
+IMPORTANTE: Responda APENAS com um JSON válido, sem texto adicional antes ou depois.
+
+Cada questão deve ter:
+- Um texto base com fundamentação teórica de 2-3 linhas
+- Uma fonte acadêmica realista (autor brasileiro da área educacional)
+- Um enunciado claro e direto
+- Exatamente 5 alternativas
+- Uma justificativa detalhada da resposta correta
+
+Formato JSON exato:
+{
+  "questions": [
+    {
+      "questionNumber": 1,
+      "baseText": "Texto base com fundamentação teórica sobre o tema.",
+      "source": "AUTOR, Nome. Título da Obra Educacional. Editora, 2020.",
+      "enunciado": "Pergunta clara e objetiva sobre o tema?",
+      "options": [
+        "Primeira alternativa",
+        "Segunda alternativa", 
+        "Terceira alternativa",
+        "Quarta alternativa",
+        "Quinta alternativa"
+      ],
+      "correctAnswerIndex": 0,
+      "justification": "<strong>Justificativa:</strong> Explicação detalhada da resposta correta."
+    }
+  ]
+}`;
+
+                console.log('🌐 Making API request to Gemini...');
+                console.log('🔗 URL:', `${GEMINI_CONFIG.baseURL}?key=${GEMINI_CONFIG.apiKey.substring(0, 10)}...`);
+
+                try {
+                    const response = await fetch(`${GEMINI_CONFIG.baseURL}?key=${GEMINI_CONFIG.apiKey}`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{ 
+                                parts: [{ text: prompt }] 
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 8192,
+                            }
+                        })
+                    });
+
+                    console.log('📡 Response status:', response.status);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ API Error Response:', errorText);
+                        throw new Error(`API Error: ${response.status} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('📥 Raw API response:', data);
+
+                    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                        console.error('❌ Invalid API response structure:', data);
+                        throw new Error('Invalid API response structure');
+                    }
+
+                    const content = data.candidates[0].content.parts[0].text;
+                    console.log('📝 Generated content:', content.substring(0, 200) + '...');
+                    
+                    // Try to extract and parse JSON
+                    let jsonMatch = content.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) {
+                        // Try alternative extraction
+                        const startIndex = content.indexOf('{');
+                        const endIndex = content.lastIndexOf('}');
+                        if (startIndex !== -1 && endIndex !== -1) {
+                            jsonMatch = [content.substring(startIndex, endIndex + 1)];
+                        }
+                    }
+
+                    if (jsonMatch) {
+                        try {
+                            const parsedData = JSON.parse(jsonMatch[0]);
+                            console.log('✅ Successfully parsed JSON:', parsedData);
+                            
+                            if (parsedData.questions && Array.isArray(parsedData.questions)) {
+                                console.log(`🎯 Generated ${parsedData.questions.length} questions`);
+                                return parsedData.questions;
+                            } else {
+                                console.error('❌ Questions array not found in response');
+                                throw new Error('Questions array not found in response');
+                            }
+                        } catch (parseError) {
+                            console.error('❌ JSON Parse Error:', parseError);
+                            console.error('❌ Raw JSON:', jsonMatch[0]);
+                            throw new Error(`JSON Parse Error: ${parseError.message}`);
+                        }
+                    } else {
+                        console.error('❌ No JSON found in response:', content);
+                        throw new Error('No valid JSON found in response');
+                    }
+                } catch (networkError) {
+                    console.error('❌ Network/Fetch Error:', networkError);
+                    throw new Error(`Network Error: ${networkError.message}`);
+                }
+            }
+        }
+
+        // UI Enhancements for loading states and notifications
+        class UIEnhancements {
+            static showLoading(message = 'Carregando...') {
+                const loadingHTML = `
+                    <div class="loading-overlay">
+                        <div class="loading-content fade-in">
+                            <div class="spinner"></div>
+                            <p class="text-lg font-semibold text-gray-800 mb-2">${message}</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', loadingHTML);
+            }
+
+            static hideLoading() {
+                const overlay = document.querySelector('.loading-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.remove(), 300);
+                }
+            }
+
+            static showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // Quiz Analytics for tracking performance
+        class QuizAnalytics {
+            constructor() {
+                this.startTime = Date.now();
+                this.questionTimes = [];
+                this.interactions = [];
+                this.questionStartTime = null;
+            }
+
+            trackQuestionStart(questionIndex) {
+                this.questionStartTime = Date.now();
+            }
+
+            trackQuestionEnd(questionIndex, isCorrect) {
+                if (this.questionStartTime) {
+                    const timeSpent = Date.now() - this.questionStartTime;
+                    this.questionTimes[questionIndex] = timeSpent;
+                    
+                    this.interactions.push({
+                        question: questionIndex,
+                        timeSpent,
+                        isCorrect,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+
+            generateReport() {
+                const totalTime = Date.now() - this.startTime;
+                const averageTime = this.questionTimes.length > 0 
+                    ? this.questionTimes.reduce((a, b) => a + b, 0) / this.questionTimes.length 
+                    : 0;
+
+                return {
+                    totalTime,
+                    averageTimePerQuestion: averageTime,
+                    interactions: this.interactions,
+                    performance: this.calculatePerformanceMetrics()
+                };
+            }
+
+            calculatePerformanceMetrics() {
+                const correctAnswers = this.interactions.filter(i => i.isCorrect).length;
+                const totalAnswers = this.interactions.length;
+                const accuracy = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0;
+
+                return {
+                    correctAnswers,
+                    totalAnswers,
+                    accuracy: Math.round(accuracy * 100) / 100
+                };
+            }
+        }
+
+        // Firebase Authentication Manager
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+                this.isAuthenticated = false;
+                this.checkFirebaseConfig();
+                this.setupAuthListener();
+            }
+
+            checkFirebaseConfig() {
+                // Verificar se Firebase está configurado corretamente
+                if (!window.auth || !window.firebaseAuth) {
+                    console.warn('⚠️ Firebase Authentication não está disponível');
+                    UIEnhancements.showToast('Firebase Auth não configurado - usando modo offline', 'info');
+                    return false;
+                }
+
+                // Verificar se as configurações básicas estão presentes
+                try {
+                    const config = window.firebaseApp.options;
+                    if (!config.apiKey || !config.authDomain || !config.projectId) {
+                        console.error('❌ Configurações do Firebase incompletas');
+                        UIEnhancements.showToast('Configurações do Firebase incompletas', 'error');
+                        return false;
+                    }
+                    console.log('✅ Firebase configurado:', config.projectId);
+                    return true;
+                } catch (error) {
+                    console.error('❌ Erro na configuração do Firebase:', error);
+                    return false;
+                }
+            }
+
+            setupAuthListener() {
+                if (!window.auth || !window.firebaseAuth) {
+                    console.warn('Firebase Auth not available');
+                    return;
+                }
+
+                window.firebaseAuth.onAuthStateChanged(window.auth, (user) => {
+                    this.currentUser = user;
+                    this.isAuthenticated = !!user;
+                    
+                    if (user) {
+                        console.log('User logged in:', user.email);
+                        this.handleUserLogin(user);
+                    } else {
+                        console.log('User logged out');
+                        this.handleUserLogout();
+                    }
+                });
+            }
+
+            async registerUser(name, email, password, accessCode = '') {
+                // Verificar se Firebase Auth está disponível
+                if (!window.auth || !window.firebaseAuth) {
+                    UIEnhancements.showToast('Firebase Authentication não está configurado. Use o modo visitante.', 'error');
+                    return { success: false, error: 'Firebase não configurado' };
+                }
+
+                try {
+                    UIEnhancements.showLoading('Criando conta...');
+                    
+                    const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(window.auth, email, password);
+                    const user = userCredential.user;
+                    
+                    // Update user profile with name
+                    await window.firebaseAuth.updateProfile(user, {
+                        displayName: name
+                    });
+
+                    // Store additional user data in Firestore
+                    await this.storeUserProfile(user.uid, {
+                        name,
+                        email,
+                        accessCode,
+                        createdAt: new Date(),
+                        lastLogin: new Date()
+                    });
+
+                    UIEnhancements.hideLoading();
+                    UIEnhancements.showToast('Conta criada com sucesso!', 'success');
+                    
+                    return { success: true, user };
+                } catch (error) {
+                    UIEnhancements.hideLoading();
+                    console.error('Registration error:', error);
+                    
+                    let message = 'Erro ao criar conta. Tente novamente.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        message = 'Este email já está em uso.';
+                    } else if (error.code === 'auth/weak-password') {
+                        message = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        message = 'Email inválido.';
+                    }
+                    
+                    UIEnhancements.showToast(message, 'error');
+                    return { success: false, error: message };
+                }
+            }
+
+            async loginUser(email, password) {
+                // Verificar se Firebase Auth está disponível
+                if (!window.auth || !window.firebaseAuth) {
+                    UIEnhancements.showToast('Firebase Authentication não está configurado. Use o modo visitante.', 'error');
+                    return { success: false, error: 'Firebase não configurado' };
+                }
+
+                try {
+                    UIEnhancements.showLoading('Fazendo login...');
+                    
+                    const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
+                    const user = userCredential.user;
+                    
+                    // Update last login
+                    await this.updateUserLastLogin(user.uid);
+                    
+                    UIEnhancements.hideLoading();
+                    UIEnhancements.showToast('Login realizado com sucesso!', 'success');
+                    
+                    return { success: true, user };
+                } catch (error) {
+                    UIEnhancements.hideLoading();
+                    console.error('Login error:', error);
+                    
+                    let message = 'Erro ao fazer login. Verifique suas credenciais.';
+                    if (error.code === 'auth/user-not-found') {
+                        message = 'Usuário não encontrado.';
+                    } else if (error.code === 'auth/wrong-password') {
+                        message = 'Senha incorreta.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        message = 'Email inválido.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        message = 'Muitas tentativas. Tente novamente mais tarde.';
+                    }
+                    
+                    UIEnhancements.showToast(message, 'error');
+                    return { success: false, error: message };
+                }
+            }
+
+            async logoutUser() {
+                try {
+                    await window.firebaseAuth.signOut(window.auth);
+                    UIEnhancements.showToast('Logout realizado com sucesso!', 'success');
+                    // Reload page to reset state
+                    setTimeout(() => location.reload(), 1000);
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    UIEnhancements.showToast('Erro ao fazer logout.', 'error');
+                }
+            }
+
+            async storeUserProfile(uid, userData) {
+                if (!window.db) return;
+                
+                try {
+                    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await setDoc(doc(window.db, 'users', uid), userData);
+                } catch (error) {
+                    console.error('Error storing user profile:', error);
+                }
+            }
+
+            async updateUserLastLogin(uid) {
+                if (!window.db) return;
+                
+                try {
+                    const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await updateDoc(doc(window.db, 'users', uid), {
+                        lastLogin: new Date()
+                    });
+                } catch (error) {
+                    console.error('Error updating last login:', error);
+                }
+            }
+
+            async getUserProfile(uid) {
+                if (!window.db) return null;
+                
+                try {
+                    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    const docSnap = await getDoc(doc(window.db, 'users', uid));
+                    return docSnap.exists() ? docSnap.data() : null;
+                } catch (error) {
+                    console.error('Error getting user profile:', error);
+                    return null;
+                }
+            }
+
+            handleUserLogin(user) {
+                // User is logged in, show config screen
+                this.showConfigScreen(user);
+            }
+
+            handleUserLogout() {
+                // User is logged out, show auth screen
+                this.showAuthScreen();
+            }
+
+            showAuthScreen() {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('user-screen').classList.add('hidden');
+                document.getElementById('config-screen').classList.add('hidden');
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-dashboard').classList.add('hidden');
+            }
+
+            async showConfigScreen(user) {
+                // Get user profile data
+                const profile = await this.getUserProfile(user.uid);
+                
+                // Set current user with profile data
+                currentUser = {
+                    uid: user.uid,
+                    name: user.displayName || profile?.name || 'Usuário',
+                    email: user.email,
+                    accessCode: profile?.accessCode || '',
+                    isAuthenticated: true
+                };
+                
+                // Show config screen
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('user-screen').classList.add('hidden');
+                document.getElementById('config-screen').classList.remove('hidden');
+                
+                // Update welcome message and show logout button
+                document.getElementById('welcome-message').textContent = 
+                    `Olá, ${currentUser.name.split(' ')[0]}! Configure seu simulado abaixo:`;
+                document.getElementById('logout-btn').classList.remove('hidden');
+            }
+
+            skipAuth() {
+                // Show user identification screen for guest mode
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('user-screen').classList.remove('hidden');
+            }
+
+            testFirebaseConfig() {
+                console.log('🔧 Testando configuração do Firebase...');
+                
+                const results = {
+                    firebaseApp: !!window.firebaseApp,
+                    auth: !!window.auth,
+                    firebaseAuth: !!window.firebaseAuth,
+                    db: !!window.db
+                };
+
+                if (window.firebaseApp) {
+                    const config = window.firebaseApp.options;
+                    results.config = {
+                        apiKey: !!config.apiKey,
+                        authDomain: !!config.authDomain,
+                        projectId: config.projectId || 'não definido'
+                    };
+                }
+
+                console.table(results);
+
+                // Mostrar resultado visual
+                const status = results.firebaseApp && results.auth && results.firebaseAuth;
+                const message = status 
+                    ? `✅ Firebase configurado corretamente!\nProjeto: ${results.config?.projectId}`
+                    : `❌ Firebase não configurado. Verifique:\n- Firebase App: ${results.firebaseApp}\n- Auth: ${results.auth}\n- FirebaseAuth: ${results.firebaseAuth}`;
+
+                alert(message);
+
+                if (!status) {
+                    UIEnhancements.showToast('Use o modo visitante enquanto configura o Firebase', 'info');
+                }
+            }
+        }
+
+        // Firebase Integration Class
+        class FirebaseManager {
+            constructor() {
+                this.isConfigured = this.checkFirebaseConfig();
+            }
+
+            checkFirebaseConfig() {
+                // Check if Firebase is properly configured
+                try {
+                    return window.db && window.firebaseApp;
+                } catch (error) {
+                    console.warn('Firebase not configured:', error);
+                    return false;
+                }
+            }
+
+            async validateUser(name, email, accessCode = '') {
+                if (!this.isConfigured) {
+                    // If Firebase is not configured, allow all users
+                    UIEnhancements.showToast('Modo offline - Firebase não configurado', 'info');
+                    return { isValid: true, userData: { name, email } };
+                }
+
+                try {
+                    // Check if user exists in whitelist (if access code is provided)
+                    if (accessCode) {
+                        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                        const accessDoc = await getDoc(doc(window.db, 'accessCodes', accessCode));
+                        
+                        if (!accessDoc.exists()) {
+                            return { isValid: false, message: 'Código de acesso inválido' };
+                        }
+                    }
+
+                    // Store user data
+                    await this.storeUserData(name, email, accessCode);
+                    
+                    return { 
+                        isValid: true, 
+                        userData: { name, email, accessCode },
+                        message: 'Usuário validado com sucesso!'
+                    };
+                } catch (error) {
+                    console.error('Error validating user:', error);
+                    return { isValid: false, message: 'Erro ao validar usuário. Tente novamente.' };
+                }
+            }
+
+            async storeUserData(name, email, accessCode) {
+                if (!this.isConfigured) return;
+
+                try {
+                    const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    
+                    const userData = {
+                        name,
+                        email,
+                        accessCode,
+                        timestamp: new Date(),
+                        sessionId: this.generateSessionId()
+                    };
+
+                    await addDoc(collection(window.db, 'userSessions'), userData);
+                    
+                    // Store in localStorage for offline access
+                    localStorage.setItem('currentUser', JSON.stringify(userData));
+                    
+                } catch (error) {
+                    console.error('Error storing user data:', error);
+                }
+            }
+
+            async storeQuizResult(userData, quizConfig, results) {
+                if (!this.isConfigured) {
+                    // Store locally if Firebase not configured
+                    const localResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
+                    localResults.push({
+                        ...userData,
+                        config: quizConfig,
+                        results,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('quizResults', JSON.stringify(localResults));
+                    return;
+                }
+
+                try {
+                    const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    
+                    await addDoc(collection(window.db, 'quizResults'), {
+                        userData,
+                        config: quizConfig,
+                        results,
+                        timestamp: new Date()
+                    });
+                    
+                } catch (error) {
+                    console.error('Error storing quiz result:', error);
+                }
+            }
+
+            generateSessionId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+        }
+
+        // Global variables
+        let quizDataManager = null;
+        let quizAnalytics = null;
+        let firebaseManager = null;
+        let authManager = null;
+        let currentUser = null;
+        let quizConfig = {
+            topic: 'historia-educacao',
+            difficulty: 'intermediario',
+            quantity: 10,
+            mode: 'dynamic',
+            useTimer: false,
+            timerMinutes: 30
+        };
+
+        const staticQuizData = [
             {
                 questionNumber: 1,
                 baseText: 'A Escola Nova não foi um movimento homogêneo. (...) O que unia essas correntes era a oposição à escola tradicional, verbalista e autoritária, e a defesa de uma educação centrada no aluno, na atividade e na vida em sociedade, buscando formar um indivíduo para uma sociedade democrática.',
@@ -305,6 +1543,16 @@ Estão corretas apenas as assertivas:`,
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize managers
+            quizDataManager = new QuizDataManager();
+            quizAnalytics = new QuizAnalytics();
+            firebaseManager = new FirebaseManager();
+            authManager = new AuthManager();
+
+            // Get DOM elements
+            const userScreen = document.getElementById('user-screen');
+            const userForm = document.getElementById('user-form');
+            const configScreen = document.getElementById('config-screen');
             const startForm = document.getElementById('start-form');
             const startScreen = document.getElementById('start-screen');
             const quizDashboard = document.getElementById('quiz-dashboard');
@@ -318,54 +1566,377 @@ Estão corretas apenas as assertivas:`,
             const quizTitleElement = document.getElementById('quiz-title');
             const quizThemesElement = document.getElementById('quiz-themes');
             const timerDisplay = document.getElementById('timer-display');
-            const timerYesBtn = document.getElementById('timer-yes');
-            const timerNoBtn = document.getElementById('timer-no');
-            const timerConfig = document.getElementById('timer-config');
             const highlighterPalette = document.getElementById('highlighter-palette');
+
+            // Authentication handlers
+            setupAuthenticationHandlers();
+
+            function setupAuthenticationHandlers() {
+                // Toggle between login and register forms
+                document.getElementById('show-register').addEventListener('click', () => {
+                    document.getElementById('login-form').classList.add('hidden');
+                    document.getElementById('register-form').classList.remove('hidden');
+                });
+
+                document.getElementById('show-login').addEventListener('click', () => {
+                    document.getElementById('register-form').classList.add('hidden');
+                    document.getElementById('login-form').classList.remove('hidden');
+                });
+
+                // Skip authentication (guest mode)
+                document.getElementById('skip-auth').addEventListener('click', () => {
+                    authManager.skipAuth();
+                });
+
+                // Logout button
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    if (confirm('Tem certeza que deseja sair?')) {
+                        authManager.logoutUser();
+                    }
+                });
+
+                // Test Firebase configuration
+                document.getElementById('test-firebase').addEventListener('click', () => {
+                    authManager.testFirebaseConfig();
+                });
+
+                // Test Gemini API
+                document.getElementById('test-gemini').addEventListener('click', async () => {
+                    await testGeminiAPI();
+                });
+
+                // Login form
+                document.getElementById('login-form-element').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('login-email').value;
+                    const password = document.getElementById('login-password').value;
+
+                    const result = await authManager.loginUser(email, password);
+                    if (!result.success) {
+                        console.error('Login failed:', result.error);
+                    }
+                    // AuthManager handles the screen transition automatically
+                });
+
+                // Register form
+                document.getElementById('register-form-element').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const name = document.getElementById('register-name').value;
+                    const email = document.getElementById('register-email').value;
+                    const password = document.getElementById('register-password').value;
+                    const confirmPassword = document.getElementById('register-confirm-password').value;
+                    const accessCode = document.getElementById('register-access-code').value;
+
+                    // Validate passwords match
+                    if (password !== confirmPassword) {
+                        UIEnhancements.showToast('As senhas não coincidem.', 'error');
+                        return;
+                    }
+
+                    const result = await authManager.registerUser(name, email, password, accessCode);
+                    if (!result.success) {
+                        console.error('Registration failed:', result.error);
+                    }
+                    // AuthManager handles the screen transition automatically
+                });
+            }
+
+            // User identification handler
+            userForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('student-name').value;
+                const email = document.getElementById('student-email').value;
+                const accessCode = document.getElementById('access-code').value;
+
+                UIEnhancements.showLoading('Validando usuário...');
+
+                try {
+                    const validation = await firebaseManager.validateUser(name, email, accessCode);
+                    
+                    UIEnhancements.hideLoading();
+
+                    if (validation.isValid) {
+                        currentUser = validation.userData;
+                        
+                        // Show config screen
+                        userScreen.style.display = 'none';
+                        configScreen.classList.remove('hidden');
+                        
+                        // Update welcome message
+                        document.getElementById('welcome-message').textContent = 
+                            `Olá, ${name.split(' ')[0]}! Configure seu simulado abaixo:`;
+                        
+                        UIEnhancements.showToast(validation.message || 'Usuário validado!', 'success');
+                    } else {
+                        UIEnhancements.showToast(validation.message, 'error');
+                    }
+                } catch (error) {
+                    UIEnhancements.hideLoading();
+                    UIEnhancements.showToast('Erro ao validar usuário. Tente novamente.', 'error');
+                    console.error('User validation error:', error);
+                }
+            });
             
+            // Quiz state variables
             let currentQuestionIndex = 0;
-            let userAnswers = new Array(quizData.length).fill(null);
-            let verifiedAnswers = new Array(quizData.length).fill(false);
-            let questionStates = quizData.map(q => ({
-                baseTextHTML: q.baseText,
-                enunciadoHTML: q.enunciado
-            }));
+            let userAnswers = [];
+            let verifiedAnswers = [];
+            let questionStates = [];
             let scoreChart = null;
             let timerInterval = null;
             let timeRemaining = 0;
             let useTimer = false;
+            let quizData = [];
 
-            timerYesBtn.addEventListener('click', () => {
-                useTimer = true;
-                timerConfig.classList.remove('hidden');
-                timerYesBtn.classList.add('bg-blue-600', 'text-white');
-                timerNoBtn.classList.remove('bg-blue-600', 'text-white');
-                timerNoBtn.classList.add('bg-gray-200');
+            // Configuration screen handlers
+            setupConfigurationScreen();
+
+            function setupConfigurationScreen() {
+                // Topic selection
+                const topicSelect = document.getElementById('topic-select');
+                topicSelect.addEventListener('change', (e) => {
+                    quizConfig.topic = e.target.value;
+                });
+
+                // Difficulty buttons
+                document.querySelectorAll('.diff-btn[data-level]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.diff-btn[data-level]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        quizConfig.difficulty = e.target.dataset.level;
+                    });
+                });
+
+                // Question count slider
+                const questionCountSlider = document.getElementById('question-count');
+                const countDisplay = document.getElementById('count-display');
+                questionCountSlider.addEventListener('input', (e) => {
+                    const count = e.target.value;
+                    quizConfig.quantity = parseInt(count);
+                    countDisplay.textContent = `${count} questões`;
+                });
+
+                // Mode selection
+                const modeDynamic = document.getElementById('mode-dynamic');
+                const modeStatic = document.getElementById('mode-static');
+                const modeDescription = document.getElementById('mode-description');
+
+                modeDynamic.addEventListener('click', () => {
+                    modeDynamic.classList.add('active');
+                    modeStatic.classList.remove('active');
+                    quizConfig.mode = 'dynamic';
+                    modeDescription.textContent = 'Questões geradas por IA baseadas no tema selecionado';
+                    
+                    if (!GEMINI_CONFIG.apiKey) {
+                        UIEnhancements.showToast('Configure a API key do Gemini para usar o modo dinâmico', 'info');
+                    }
+                });
+
+                modeStatic.addEventListener('click', () => {
+                    modeStatic.classList.add('active');
+                    modeDynamic.classList.remove('active');
+                    quizConfig.mode = 'static';
+                    modeDescription.textContent = 'Questões pré-definidas sobre didática e história da educação';
+                });
+
+                // Timer configuration
+                const timerYesConfig = document.getElementById('timer-yes-config');
+                const timerNoConfig = document.getElementById('timer-no-config');
+                const timerConfigAdvanced = document.getElementById('timer-config-advanced');
+                const timerMinutesConfig = document.getElementById('timer-minutes-config');
+                const timerDisplayConfig = document.getElementById('timer-display-config');
+
+                timerYesConfig.addEventListener('click', () => {
+                    timerYesConfig.classList.add('active');
+                    timerNoConfig.classList.remove('active');
+                    timerConfigAdvanced.classList.remove('hidden');
+                    quizConfig.useTimer = true;
+                });
+
+                timerNoConfig.addEventListener('click', () => {
+                    timerNoConfig.classList.add('active');
+                    timerYesConfig.classList.remove('active');
+                    timerConfigAdvanced.classList.add('hidden');
+                    quizConfig.useTimer = false;
+                });
+
+                timerMinutesConfig.addEventListener('input', (e) => {
+                    const minutes = e.target.value;
+                    quizConfig.timerMinutes = parseInt(minutes);
+                    timerDisplayConfig.textContent = `${minutes} minutos`;
+                });
+
+                // Start configuration button
+                const startConfigBtn = document.getElementById('start-config-btn');
+                startConfigBtn.addEventListener('click', async () => {
+                    UIEnhancements.showLoading('Preparando questões...');
+                    
+                    try {
+                        // Get questions based on configuration
+                        quizData = await quizDataManager.getQuestions(quizConfig);
+                        
+                        // Initialize quiz state
+                        userAnswers = new Array(quizData.length).fill(null);
+                        verifiedAnswers = new Array(quizData.length).fill(false);
+                        questionStates = quizData.map(q => ({
+                            baseTextHTML: q.baseText,
+                            enunciadoHTML: q.enunciado
+                        }));
+
+                        UIEnhancements.hideLoading();
+                        
+                        // Show confirmation screen
+                        configScreen.style.display = 'none';
+                        startScreen.classList.remove('hidden');
+                        
+                        // Update quiz summary
+                        updateQuizSummary();
+
+                        UIEnhancements.showToast(`${quizData.length} questões carregadas com sucesso!`, 'success');
+                        
+                    } catch (error) {
+                        UIEnhancements.hideLoading();
+                        UIEnhancements.showToast('Erro ao carregar questões. Tente novamente.', 'error');
+                        console.error('Error loading questions:', error);
+                    }
+                });
+            }
+
+            // Function to update quiz summary in confirmation screen
+            function updateQuizSummary() {
+                const topicNames = {
+                    'didatica-geral': 'Didática Geral',
+                    'historia-educacao': 'História da Educação',
+                    'metodologias-ativas': 'Metodologias Ativas',
+                    'psicologia-educacional': 'Psicologia Educacional',
+                    'avaliacao-educacional': 'Avaliação Educacional',
+                    'legislacao-educacional': 'Legislação Educacional'
+                };
+
+                const difficultyNames = {
+                    'basico': 'Básico',
+                    'intermediario': 'Intermediário',
+                    'avancado': 'Avançado'
+                };
+
+                const summaryHTML = `
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">👤 Participante:</span>
+                                <span class="font-semibold">${currentUser.name}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">📚 Tema:</span>
+                                <span class="font-semibold">${topicNames[quizConfig.topic]}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">⚡ Dificuldade:</span>
+                                <span class="font-semibold">${difficultyNames[quizConfig.difficulty]}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">🎯 Questões:</span>
+                                <span class="font-semibold">${quizData.length}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">🔄 Modo:</span>
+                                <span class="font-semibold">${quizConfig.mode === 'dynamic' ? 'Dinâmico (IA)' : 'Estático'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-600">⏱️ Tempo:</span>
+                                <span class="font-semibold">${quizConfig.useTimer ? `${quizConfig.timerMinutes} minutos` : 'Livre'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('quiz-summary').innerHTML = summaryHTML;
+            }
+
+            // Back to configuration button
+            document.getElementById('back-to-config').addEventListener('click', () => {
+                startScreen.classList.add('hidden');
+                configScreen.classList.remove('hidden');
             });
 
-            timerNoBtn.addEventListener('click', () => {
-                useTimer = false;
-                timerConfig.classList.add('hidden');
-                timerNoBtn.classList.add('bg-blue-600', 'text-white');
-                timerYesBtn.classList.remove('bg-blue-600', 'text-white');
-                timerYesBtn.classList.add('bg-gray-200');
-            });
-
+            // Start quiz form (final confirmation)
             startForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 startScreen.style.display = 'none';
                 quizDashboard.classList.remove('hidden');
-                quizTitleElement.innerHTML = 'Simulado N° ${simuladoNumero} - ${simuladoAcronym}';
-                if(quizThemesElement) quizThemesElement.textContent = 'Didática, Metodologias Ativas e História da Educação';
+                quizTitleElement.innerHTML = `Simulado N° ${simuladoNumero} - ${simuladoAcronym}`;
+                
+                const topicNames = {
+                    'didatica-geral': 'Didática Geral',
+                    'historia-educacao': 'História da Educação',
+                    'metodologias-ativas': 'Metodologias Ativas',
+                    'psicologia-educacional': 'Psicologia Educacional',
+                    'avaliacao-educacional': 'Avaliação Educacional',
+                    'legislacao-educacional': 'Legislação Educacional'
+                };
+                
+                if(quizThemesElement) {
+                    quizThemesElement.textContent = `${topicNames[quizConfig.topic]} - ${quizConfig.difficulty.toUpperCase()} - ${quizData.length} questões`;
+                }
 
-                if (useTimer) {
-                    const minutes = parseInt(document.getElementById('timer-minutes').value, 10);
-                    startTimer(minutes);
+                if (quizConfig.useTimer) {
+                    startTimer(quizConfig.timerMinutes);
                 } else {
                     timerDisplay.style.display = 'none';
                 }
+                
+                // Start analytics tracking
+                quizAnalytics = new QuizAnalytics();
+                
                 init();
             });
+
+            // Test Gemini API function
+            async function testGeminiAPI() {
+                console.log('🧪 Testing Gemini API...');
+                
+                if (!GEMINI_CONFIG.apiKey) {
+                    UIEnhancements.showToast('❌ API key do Gemini não configurada', 'error');
+                    alert('❌ API key do Gemini não está configurada!\n\nConfigurações atuais:\n- API Key: não definida\n- Base URL: ' + GEMINI_CONFIG.baseURL);
+                    return;
+                }
+
+                UIEnhancements.showLoading('Testando API do Gemini...');
+
+                try {
+                    // Test with a simple prompt
+                    const testConfig = {
+                        topic: 'historia-educacao',
+                        difficulty: 'intermediario',
+                        quantity: 2
+                    };
+
+                    console.log('🔧 Testing with config:', testConfig);
+                    
+                    const result = await quizDataManager.generateDynamicQuestions(testConfig);
+                    
+                    UIEnhancements.hideLoading();
+                    
+                    if (result && result.length > 0) {
+                        UIEnhancements.showToast(`✅ Gemini API funcionando! ${result.length} questões geradas`, 'success');
+                        console.log('✅ Test successful:', result);
+                        alert(`✅ Gemini API está funcionando!\n\n- Questões geradas: ${result.length}\n- Primeira questão: ${result[0].enunciado.substring(0, 50)}...`);
+                    } else {
+                        UIEnhancements.showToast('⚠️ API respondeu mas sem questões válidas', 'error');
+                        alert('⚠️ API do Gemini respondeu, mas não retornou questões válidas.\n\nVerifique o console para mais detalhes.');
+                    }
+                } catch (error) {
+                    UIEnhancements.hideLoading();
+                    console.error('❌ Gemini API test failed:', error);
+                    UIEnhancements.showToast('❌ Erro ao testar API do Gemini', 'error');
+                    alert(`❌ Erro ao testar API do Gemini:\n\n${error.message}\n\nVerifique:\n- API key está correta\n- Há cota disponível\n- Conexão com internet`);
+                }
+            }
+
+            // Timer and question functions remain the same
 
             function startTimer(minutes) {
                 timeRemaining = minutes * 60;
@@ -429,6 +2000,9 @@ Estão corretas apenas as assertivas:`,
             }
 
             function renderQuestion(index) {
+                // Track question start for analytics
+                quizAnalytics.trackQuestionStart(index);
+                
                 const q = quizData[index];
                 const state = questionStates[index];
                 const isVerified = verifiedAnswers[index];
@@ -449,15 +2023,17 @@ Estão corretas apenas as assertivas:`,
                 }).join('');
 
                 questionContent.innerHTML = `
-                    <h2 class="text-xl font-bold mb-2">Questão ${q.questionNumber}</h2>
-                    <div id="base-text-container" class="text-base text-gray-600 italic bg-gray-100 p-4 rounded-md mb-4">
-                        <p class="mb-2">${state.baseTextHTML}</p>
-                        <p class="text-sm text-right"><strong>Fonte:</strong> ${q.source}</p>
-                    </div>
-                    <p id="enunciado-container" class="enunciado my-4 text-gray-800 text-lg whitespace-pre-wrap">${state.enunciadoHTML}</p>
-                    <div class="options-container space-y-3 ${isVerified ? 'disabled-options' : ''}">${optionsHTML}</div>
-                    <div id="justification-area" class="mt-6 p-4 bg-amber-100 border-l-4 border-amber-500 text-amber-800 rounded-r-md ${isVerified ? '' : 'hidden'}">
-                        ${isVerified ? q.justification : ''}
+                    <div class="question-transition">
+                        <h2 class="text-xl font-bold mb-2 efetiva-blue">Questão ${q.questionNumber} de ${quizData.length}</h2>
+                        <div id="base-text-container" class="text-base text-gray-600 italic bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-gray-300">
+                            <p class="mb-2">${state.baseTextHTML}</p>
+                            <p class="text-sm text-right"><strong>Fonte:</strong> ${q.source}</p>
+                        </div>
+                        <p id="enunciado-container" class="enunciado my-4 text-gray-800 text-lg whitespace-pre-wrap leading-relaxed">${state.enunciadoHTML}</p>
+                        <div class="options-container space-y-3 ${isVerified ? 'disabled-options' : ''}">${optionsHTML}</div>
+                        <div id="justification-area" class="mt-6 p-4 bg-green-50 border-l-4 border-green-400 text-green-800 rounded-r-lg ${isVerified ? 'fade-in' : 'hidden'}">
+                            ${isVerified ? q.justification : ''}
+                        </div>
                     </div>
                 `;
 
@@ -568,10 +2144,23 @@ Estão corretas apenas as assertivas:`,
             checkBtn.addEventListener('click', () => {
                 const index = currentQuestionIndex;
                 if (userAnswers[index] === null) {
-                    alert('Por favor, selecione uma resposta.');
+                    UIEnhancements.showToast('Por favor, selecione uma resposta.', 'error');
                     return;
                 }
+                
+                const isCorrect = userAnswers[index] === quizData[index].correctAnswerIndex;
                 verifiedAnswers[index] = true;
+                
+                // Track answer for analytics
+                quizAnalytics.trackQuestionEnd(index, isCorrect);
+                
+                // Show feedback
+                if (isCorrect) {
+                    UIEnhancements.showToast('Resposta correta! 🎉', 'success');
+                } else {
+                    UIEnhancements.showToast('Resposta incorreta. Veja a justificativa.', 'error');
+                }
+                
                 renderQuestion(index);
             });
 
@@ -610,12 +2199,34 @@ Estão corretas apenas as assertivas:`,
                 const unansweredCount = verifiedAnswers.filter(v => !v).length;
                 const percentage = quizData.length > 0 ? (correctCount / quizData.length) * 100 : 0;
 
-                document.getElementById('score-text').textContent = `Você acertou ${correctCount} de ${quizData.length} questões.`;
+                // Get analytics report
+                const analyticsReport = quizAnalytics.generateReport();
+                const avgTimeMinutes = Math.round((analyticsReport.averageTimePerQuestion / 1000 / 60) * 10) / 10;
+                const totalTimeMinutes = Math.round((analyticsReport.totalTime / 1000 / 60) * 10) / 10;
+
+                // Enhanced score display
+                document.getElementById('score-text').innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-2xl font-bold">Você acertou ${correctCount} de ${quizData.length} questões</p>
+                        <p class="text-lg text-gray-600">Aproveitamento: ${Math.round(percentage)}%</p>
+                        <div class="text-sm text-gray-500 space-y-1">
+                            <p>⏱️ Tempo total: ${totalTimeMinutes} minutos</p>
+                            <p>📊 Tempo médio por questão: ${avgTimeMinutes} minutos</p>
+                            <p>🎯 Tema: ${quizConfig.topic.replace('-', ' ')}</p>
+                            <p>⚡ Dificuldade: ${quizConfig.difficulty}</p>
+                        </div>
+                    </div>
+                `;
+
                 const finalMsg = document.getElementById('final-message');
-                if (percentage >= 60) {
-                    finalMsg.textContent = 'Parabéns! Você alcançou um excelente resultado e demonstrou grande conhecimento. Continue assim!';
+                if (percentage >= 80) {
+                    finalMsg.innerHTML = '🏆 <strong>Excelente!</strong> Você demonstrou domínio excepcional do conteúdo. Continue assim!';
+                } else if (percentage >= 60) {
+                    finalMsg.innerHTML = '👏 <strong>Bom resultado!</strong> Você está no caminho certo. Continue estudando para aprimorar ainda mais!';
+                } else if (percentage >= 40) {
+                    finalMsg.innerHTML = '📚 <strong>Continue estudando!</strong> Você está progredindo. Revise os tópicos e tente novamente!';
                 } else {
-                    finalMsg.textContent = 'Não desanime! Cada simulado é um passo na sua jornada de aprendizado. Revise as questões e continue estudando!';
+                    finalMsg.innerHTML = '💪 <strong>Não desanime!</strong> Todo aprendizado é um processo. Use este resultado como base para seu estudo!';
                 }
 
                 const ctx = document.getElementById('scoreChart').getContext('2d');
@@ -628,7 +2239,8 @@ Estão corretas apenas as assertivas:`,
                             data: [correctCount, incorrectCount, unansweredCount],
                             backgroundColor: ['#22c55e', '#ef4444', '#e2e8f0'],
                             borderColor: '#f8fafc',
-                            borderWidth: 4
+                            borderWidth: 4,
+                            hoverOffset: 8
                         }]
                     },
                     options: {
@@ -638,17 +2250,45 @@ Estão corretas apenas as assertivas:`,
                         plugins: {
                             legend: {
                                 position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 14
+                                    }
+                                }
                             },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `${context.label}: ${context.raw}`;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((context.raw / total) * 100);
+                                        return `${context.label}: ${context.raw} (${percentage}%)`;
                                     }
                                 }
                             }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            duration: 1000
                         }
                     }
                 });
+
+                // Store results in Firebase
+                const finalResults = {
+                    correctCount,
+                    incorrectCount,
+                    unansweredCount,
+                    percentage: Math.round(percentage),
+                    analytics: analyticsReport,
+                    userAnswers,
+                    verifiedAnswers
+                };
+
+                firebaseManager.storeQuizResult(currentUser, quizConfig, finalResults);
+
+                // Log analytics for debugging (can be removed in production)
+                console.log('Quiz Analytics:', analyticsReport);
             }
         });
     </script>
