@@ -465,6 +465,8 @@
                         <button id="skip-auth" class="text-gray-500 hover:text-gray-700 text-sm">Pular Login (Modo Visitante)</button>
                         <br>
                         <button id="test-firebase" class="text-blue-500 hover:text-blue-700 text-xs">🔧 Testar Configuração Firebase</button>
+                        <br>
+                        <button onclick="testGeminiAPI()" class="text-green-500 hover:text-green-700 text-xs">🤖 Testar API do Gemini</button>
                     </div>
                 </div>
                 
@@ -713,7 +715,7 @@
         // Configuration for Gemini API (user needs to add their API key)
         const GEMINI_CONFIG = {
             apiKey: 'AIzaSyA2IeHP0QVNs8i8FtGCegHwbOzo_Bks3pM', // User needs to add API key here
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+            baseURL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
         };
 
         // Quiz Data Manager with dynamic generation capabilities
@@ -821,13 +823,14 @@ Formato JSON exato:
 }`;
 
                 console.log('🌐 Making API request to Gemini...');
-                console.log('🔗 URL:', `${GEMINI_CONFIG.baseURL}?key=${GEMINI_CONFIG.apiKey.substring(0, 10)}...`);
+                console.log('🔗 URL:', GEMINI_CONFIG.baseURL);
 
                 try {
-                    const response = await fetch(`${GEMINI_CONFIG.baseURL}?key=${GEMINI_CONFIG.apiKey}`, {
+                    const response = await fetch(GEMINI_CONFIG.baseURL, {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
+                            'X-goog-api-key': GEMINI_CONFIG.apiKey
                         },
                         body: JSON.stringify({
                             contents: [{ 
@@ -897,6 +900,62 @@ Formato JSON exato:
                     console.error('❌ Network/Fetch Error:', networkError);
                     throw new Error(`Network Error: ${networkError.message}`);
                 }
+            }
+        }
+
+        // Test function for Gemini API
+        async function testGeminiAPI() {
+            console.log('🧪 Testing Gemini API...');
+            UIEnhancements.showLoading('Testando API do Gemini...');
+            
+            try {
+                const response = await fetch(GEMINI_CONFIG.baseURL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-goog-api-key': GEMINI_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text: "Explain how AI works in a few words"
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                });
+
+                console.log('📡 Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ API Error Response:', errorText);
+                    UIEnhancements.hideLoading();
+                    UIEnhancements.showToast(`Erro na API: ${response.status} - ${errorText}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('📥 Raw API response:', data);
+
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const content = data.candidates[0].content.parts[0].text;
+                    console.log('✅ API Response:', content);
+                    UIEnhancements.hideLoading();
+                    UIEnhancements.showToast('API do Gemini funcionando corretamente!', 'success');
+                    alert(`Resposta da API do Gemini:\n\n${content}`);
+                } else {
+                    console.error('❌ Invalid API response structure:', data);
+                    UIEnhancements.hideLoading();
+                    UIEnhancements.showToast('Estrutura de resposta inválida da API', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Network/Fetch Error:', error);
+                UIEnhancements.hideLoading();
+                UIEnhancements.showToast(`Erro de rede: ${error.message}`, 'error');
             }
         }
 
