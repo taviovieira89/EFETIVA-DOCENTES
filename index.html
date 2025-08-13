@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulado Interativo - EFETIVA DOCENTES</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, collection, addDoc, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        
+
         // Configuração do Firebase (usuário precisa adicionar suas credenciais)
         const firebaseConfig = {
             apiKey: "AIzaSyAFFbN5zqWz4o8NR2A9uaEZZkQO6ZfL4ns",
@@ -22,11 +23,11 @@
             messagingSenderId: "699984569535",
             appId: "1:699984569535:web:08858cd7782ceeda74120a"
         };
-        
+
         window.firebaseApp = initializeApp(firebaseConfig);
         window.db = getFirestore(window.firebaseApp);
         window.auth = getAuth(window.firebaseApp);
-        
+
         // Exportar funções para uso global
         window.firebaseAuth = {
             createUserWithEmailAndPassword,
@@ -53,12 +54,23 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
         }
-        
+
         /* Core Colors */
-        .efetiva-blue { color: var(--efetiva-blue); }
-        .efetiva-teal { color: var(--efetiva-teal); }
-        .efetiva-blue-bg { background-color: var(--efetiva-blue); }
-        .efetiva-teal-bg { background-color: var(--efetiva-teal); }
+        .efetiva-blue {
+            color: var(--efetiva-blue);
+        }
+
+        .efetiva-teal {
+            color: var(--efetiva-teal);
+        }
+
+        .efetiva-blue-bg {
+            background-color: var(--efetiva-blue);
+        }
+
+        .efetiva-teal-bg {
+            background-color: var(--efetiva-teal);
+        }
 
         /* Enhanced Navigation */
         .question-nav-enhanced {
@@ -96,44 +108,59 @@
             transition: opacity 0.3s ease;
         }
 
-        .q-unanswered { 
-            background-color: #e2e8f0; 
+        .q-unanswered {
+            background-color: #e2e8f0;
             color: #64748b;
         }
-        .q-unanswered:hover { 
-            background-color: #cbd5e1; 
+
+        .q-unanswered:hover {
+            background-color: #cbd5e1;
             transform: scale(1.05);
         }
-        .q-current { 
-            background-color: var(--efetiva-blue); 
-            color: white; 
-            transform: scale(1.15); 
+
+        .q-current {
+            background-color: var(--efetiva-blue);
+            color: white;
+            transform: scale(1.15);
             box-shadow: 0 8px 25px rgba(9, 99, 181, 0.4);
             border-color: rgba(255, 255, 255, 0.3);
         }
-        .q-correct { 
-            background-color: #22c55e; 
-            color: white; 
+
+        .q-correct {
+            background-color: #22c55e;
+            color: white;
         }
-        .q-correct::after { opacity: 1; }
-        .q-incorrect { 
-            background-color: #ef4444; 
-            color: white; 
+
+        .q-correct::after {
+            opacity: 1;
         }
-        .q-incorrect::after { opacity: 1; }
-        .q-skipped { 
-            background-color: #f59e0b; 
-            color: white; 
+
+        .q-incorrect {
+            background-color: #ef4444;
+            color: white;
         }
-        .q-skipped::after { opacity: 1; }
+
+        .q-incorrect::after {
+            opacity: 1;
+        }
+
+        .q-skipped {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .q-skipped::after {
+            opacity: 1;
+        }
 
         /* Enhanced Options */
-        .option-item { 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            border-width: 2px; 
+        .option-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-width: 2px;
             position: relative;
             overflow: hidden;
         }
+
         .option-item::before {
             content: '';
             position: absolute;
@@ -141,67 +168,108 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
             transition: left 0.5s;
         }
+
         .option-item:hover::before {
             left: 100%;
         }
 
-        .option-unselected { 
-            border-color: var(--border-color); 
+        .option-unselected {
+            border-color: var(--border-color);
             background-color: white;
         }
-        .option-unselected:hover { 
-            border-color: var(--efetiva-blue); 
-            background-color: #eff6ff; 
+
+        .option-unselected:hover {
+            border-color: var(--efetiva-blue);
+            background-color: #eff6ff;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(9, 99, 181, 0.15);
         }
-        .option-selected { 
-            border-color: var(--efetiva-blue); 
-            background-color: #dbeafe; 
+
+        .option-selected {
+            border-color: var(--efetiva-blue);
+            background-color: #dbeafe;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(9, 99, 181, 0.2);
         }
-        .option-correct { 
-            border-color: #22c55e; 
-            background-color: #dcfce7; 
+
+        .option-correct {
+            border-color: #22c55e;
+            background-color: #dcfce7;
             animation: correctPulse 0.6s ease-out;
         }
-        .option-incorrect { 
-            border-color: #ef4444; 
-            background-color: #fee2e2; 
+
+        .option-incorrect {
+            border-color: #ef4444;
+            background-color: #fee2e2;
             animation: incorrectShake 0.6s ease-out;
         }
-        .disabled-options .option-item { pointer-events: none; }
-        .strikethrough .option-text { 
-            text-decoration: line-through; 
-            color: #9ca3af; 
+
+        .disabled-options .option-item {
+            pointer-events: none;
+        }
+
+        .strikethrough .option-text {
+            text-decoration: line-through;
+            color: #9ca3af;
             opacity: 0.6;
         }
 
         /* Animations */
         @keyframes correctPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         @keyframes incorrectShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .question-transition {
@@ -218,26 +286,37 @@
             display: none;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
             padding: 12px;
             z-index: 100;
             align-items: center;
             border: 1px solid #e2e8f0;
         }
-        
+
         #highlighter-palette button {
             transition: all 0.2s ease;
         }
-        
+
         #highlighter-palette button:hover {
             transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
-        .highlight-yellow { background-color: #fef08a; }
-        .highlight-pink { background-color: #fbcfe8; }
-        .highlight-blue { background-color: #bfdbfe; }
-        .highlight-green { background-color: #bbf7d0; }
+        .highlight-yellow {
+            background-color: #fef08a;
+        }
+
+        .highlight-pink {
+            background-color: #fbcfe8;
+        }
+
+        .highlight-blue {
+            background-color: #bfdbfe;
+        }
+
+        .highlight-green {
+            background-color: #bbf7d0;
+        }
 
         /* Loading States */
         .loading-overlay {
@@ -246,7 +325,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -259,7 +338,7 @@
             padding: 2rem;
             border-radius: 16px;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 300px;
         }
 
@@ -274,8 +353,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .progress-bar {
@@ -295,9 +379,17 @@
         }
 
         @keyframes progress {
-            0% { width: 0%; }
-            50% { width: 70%; }
-            100% { width: 100%; }
+            0% {
+                width: 0%;
+            }
+
+            50% {
+                width: 70%;
+            }
+
+            100% {
+                width: 100%;
+            }
         }
 
         /* Toast Notifications */
@@ -313,13 +405,26 @@
             animation: toastSlide 0.3s ease-out;
         }
 
-        .toast-success { background: #22c55e; }
-        .toast-error { background: #ef4444; }
-        .toast-info { background: var(--efetiva-blue); }
+        .toast-success {
+            background: #22c55e;
+        }
+
+        .toast-error {
+            background: #ef4444;
+        }
+
+        .toast-info {
+            background: var(--efetiva-blue);
+        }
 
         @keyframes toastSlide {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
         }
 
         /* Quiz Configuration */
@@ -334,7 +439,7 @@
             background: white;
             padding: 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .config-section h3 {
@@ -406,7 +511,7 @@
             border-radius: 50%;
             background: var(--efetiva-blue);
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
         /* Responsive Design */
@@ -414,11 +519,11 @@
             .config-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .difficulty-buttons {
                 flex-direction: column;
             }
-            
+
             .question-nav-enhanced {
                 grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
                 gap: 6px;
@@ -426,10 +531,11 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="container mx-auto p-4 max-w-5xl">
-        
+
         <!-- Login/Register Screen -->
         <div id="auth-screen" class="text-center p-4 sm:p-8">
             <h1 class="text-4xl sm:text-5xl font-bold mb-4">
@@ -437,76 +543,105 @@
                 <span class="efetiva-teal">DOCENTES</span>
             </h1>
             <p class="text-2xl font-semibold text-gray-700 mt-2">Sistema de Simulados</p>
-            
+
             <div class="max-w-md mx-auto mt-8">
                 <!-- Login Form -->
                 <div id="login-form" class="bg-white p-6 sm:p-8 rounded-lg shadow-lg">
                     <h2 class="text-2xl font-semibold mb-6 text-gray-800">Fazer Login</h2>
                     <form id="login-form-element" class="space-y-4">
                         <div>
-                            <label for="login-email" class="block text-left font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" id="login-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
+                            <label for="login-email"
+                                class="block text-left font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="login-email"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="seu.email@exemplo.com" required>
                         </div>
                         <div>
-                            <label for="login-password" class="block text-left font-medium text-gray-700 mb-1">Senha</label>
-                            <input type="password" id="login-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Sua senha" required>
+                            <label for="login-password"
+                                class="block text-left font-medium text-gray-700 mb-1">Senha</label>
+                            <input type="password" id="login-password"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Sua senha" required>
                         </div>
-                        <button type="submit" class="w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                        <button type="submit"
+                            class="w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
                             Entrar
                         </button>
                     </form>
-                    
+
                     <div class="mt-6 text-center">
                         <p class="text-gray-600">Ainda não tem conta?</p>
-                        <button id="show-register" class="text-blue-600 hover:text-blue-800 font-medium">Criar Conta</button>
+                        <button id="show-register" class="text-blue-600 hover:text-blue-800 font-medium">Criar
+                            Conta</button>
                     </div>
-                    
+
                     <div class="mt-4 text-center space-y-2">
-                        <button id="skip-auth" class="text-gray-500 hover:text-gray-700 text-sm">Pular Login (Modo Visitante)</button>
+                        <button id="skip-auth" class="text-gray-500 hover:text-gray-700 text-sm">Pular Login (Modo
+                            Visitante)</button>
                         <br>
-                        <button id="test-firebase" class="text-blue-500 hover:text-blue-700 text-xs">🔧 Testar Configuração Firebase</button>
+                        <button id="test-firebase" class="text-blue-500 hover:text-blue-700 text-xs">🔧 Testar
+                            Configuração Firebase</button>
                         <br>
-                        <button onclick="testGeminiAPI()" class="text-green-500 hover:text-green-700 text-xs">🤖 Testar API do Gemini</button>
+                        <button onclick="testGeminiAPI()" class="text-green-500 hover:text-green-700 text-xs">🤖 Testar
+                            API do Gemini</button>
                     </div>
                 </div>
-                
+
                 <!-- Register Form -->
                 <div id="register-form" class="hidden bg-white p-6 sm:p-8 rounded-lg shadow-lg">
                     <h2 class="text-2xl font-semibold mb-6 text-gray-800">Criar Conta</h2>
                     <form id="register-form-element" class="space-y-4">
                         <div>
-                            <label for="register-name" class="block text-left font-medium text-gray-700 mb-1">Nome Completo</label>
-                            <input type="text" id="register-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome completo" required>
+                            <label for="register-name" class="block text-left font-medium text-gray-700 mb-1">Nome
+                                Completo</label>
+                            <input type="text" id="register-name"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Seu nome completo" required>
                         </div>
                         <div>
-                            <label for="register-email" class="block text-left font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" id="register-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
+                            <label for="register-email"
+                                class="block text-left font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="register-email"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="seu.email@exemplo.com" required>
                         </div>
                         <div>
-                            <label for="register-password" class="block text-left font-medium text-gray-700 mb-1">Senha</label>
-                            <input type="password" id="register-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Mínimo 6 caracteres" required minlength="6">
+                            <label for="register-password"
+                                class="block text-left font-medium text-gray-700 mb-1">Senha</label>
+                            <input type="password" id="register-password"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Mínimo 6 caracteres" required minlength="6">
                         </div>
                         <div>
-                            <label for="register-confirm-password" class="block text-left font-medium text-gray-700 mb-1">Confirmar Senha</label>
-                            <input type="password" id="register-confirm-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Digite a senha novamente" required>
+                            <label for="register-confirm-password"
+                                class="block text-left font-medium text-gray-700 mb-1">Confirmar Senha</label>
+                            <input type="password" id="register-confirm-password"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Digite a senha novamente" required>
                         </div>
                         <div class="pt-4">
-                            <label for="register-access-code" class="block text-left font-medium text-gray-700 mb-1">Código de Acesso (opcional)</label>
-                            <input type="text" id="register-access-code" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Digite se fornecido">
+                            <label for="register-access-code"
+                                class="block text-left font-medium text-gray-700 mb-1">Código de Acesso
+                                (opcional)</label>
+                            <input type="text" id="register-access-code"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Digite se fornecido">
                         </div>
-                        <button type="submit" class="w-full efetiva-teal-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                        <button type="submit"
+                            class="w-full efetiva-teal-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
                             Criar Conta
                         </button>
                     </form>
-                    
+
                     <div class="mt-6 text-center">
                         <p class="text-gray-600">Já tem conta?</p>
-                        <button id="show-login" class="text-blue-600 hover:text-blue-800 font-medium">Fazer Login</button>
+                        <button id="show-login" class="text-blue-600 hover:text-blue-800 font-medium">Fazer
+                            Login</button>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- User Identification Screen -->
         <div id="user-screen" class="hidden text-center p-4 sm:p-8">
             <h1 class="text-4xl sm:text-5xl font-bold mb-4">
@@ -514,29 +649,38 @@
                 <span class="efetiva-teal">DOCENTES</span>
             </h1>
             <p class="text-2xl font-semibold text-gray-700 mt-2">Simulado Interativo</p>
-            
+
             <div class="max-w-md mx-auto bg-white mt-8 p-6 sm:p-8 rounded-lg shadow-lg">
                 <h2 class="text-2xl font-semibold mb-6 text-gray-800">Identificação do Usuário</h2>
                 <form id="user-form" class="space-y-4">
                     <div>
-                        <label for="student-name" class="block text-left font-medium text-gray-700 mb-1">Nome Completo</label>
-                        <input type="text" id="student-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Seu nome completo" required>
+                        <label for="student-name" class="block text-left font-medium text-gray-700 mb-1">Nome
+                            Completo</label>
+                        <input type="text" id="student-name"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Seu nome completo" required>
                     </div>
                     <div>
                         <label for="student-email" class="block text-left font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" id="student-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="seu.email@exemplo.com" required>
+                        <input type="email" id="student-email"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="seu.email@exemplo.com" required>
                     </div>
                     <div class="pt-4">
-                        <label for="access-code" class="block text-left font-medium text-gray-700 mb-1">Código de Acesso (opcional)</label>
-                        <input type="text" id="access-code" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Digite o código se fornecido">
+                        <label for="access-code" class="block text-left font-medium text-gray-700 mb-1">Código de Acesso
+                            (opcional)</label>
+                        <input type="text" id="access-code"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Digite o código se fornecido">
                     </div>
-                    <button type="submit" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                    <button type="submit"
+                        class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
                         Continuar
                     </button>
                 </form>
             </div>
         </div>
-        
+
         <!-- Quiz Configuration Screen -->
         <div id="config-screen" class="hidden text-center p-4 sm:p-8">
             <h1 class="text-4xl sm:text-5xl font-bold mb-4">
@@ -548,11 +692,12 @@
                     <p class="text-2xl font-semibold text-gray-700">Configure seu Simulado</p>
                     <p id="welcome-message" class="text-lg text-gray-600 mt-2"></p>
                 </div>
-                <button id="logout-btn" class="hidden bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                <button id="logout-btn"
+                    class="hidden bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
                     Sair
                 </button>
             </div>
-            
+
             <div class="max-w-4xl mx-auto mt-8">
                 <div class="config-grid">
                     <div class="config-section">
@@ -566,7 +711,7 @@
                             <option value="legislacao-educacional">Legislação Educacional</option>
                         </select>
                     </div>
-                    
+
                     <div class="config-section">
                         <h3>⚡ Nível de Dificuldade</h3>
                         <div class="difficulty-buttons">
@@ -575,7 +720,7 @@
                             <button data-level="avancado" class="diff-btn">Avançado</button>
                         </div>
                     </div>
-                    
+
                     <div class="config-section">
                         <h3>🎯 Quantidade de Questões</h3>
                         <input type="range" id="question-count" min="5" max="30" value="10" class="modern-slider">
@@ -585,7 +730,7 @@
                             <span>30</span>
                         </div>
                     </div>
-                    
+
                     <div class="config-section">
                         <h3>🔄 Modo de Geração</h3>
                         <div class="difficulty-buttons">
@@ -596,12 +741,13 @@
                             <span id="mode-description">Questões geradas por IA baseadas no tema selecionado</span>
                         </p>
                         <div class="mt-3">
-                            <button id="test-gemini" class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full hover:bg-purple-200 transition-colors">
+                            <button id="test-gemini"
+                                class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full hover:bg-purple-200 transition-colors">
                                 🧪 Testar API Gemini
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="config-section">
                         <h3>⏱️ Configurações de Tempo</h3>
                         <div class="difficulty-buttons mb-4">
@@ -609,8 +755,10 @@
                             <button id="timer-no-config" class="diff-btn active">Sem Tempo</button>
                         </div>
                         <div id="timer-config-advanced" class="hidden">
-                            <label for="timer-minutes-config" class="block text-left font-medium text-gray-700 mb-2">Tempo em minutos:</label>
-                            <input type="range" id="timer-minutes-config" min="10" max="120" value="30" class="modern-slider">
+                            <label for="timer-minutes-config"
+                                class="block text-left font-medium text-gray-700 mb-2">Tempo em minutos:</label>
+                            <input type="range" id="timer-minutes-config" min="10" max="120" value="30"
+                                class="modern-slider">
                             <div class="flex justify-between text-sm text-gray-600 mt-2">
                                 <span>10 min</span>
                                 <span id="timer-display-config" class="font-semibold efetiva-blue">30 minutos</span>
@@ -619,13 +767,14 @@
                         </div>
                     </div>
                 </div>
-                
-                <button id="start-config-btn" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:opacity-90 transition-opacity text-lg">
+
+                <button id="start-config-btn"
+                    class="mt-8 w-full efetiva-blue-bg text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:opacity-90 transition-opacity text-lg">
                     Continuar para Identificação
                 </button>
             </div>
         </div>
-        
+
         <!-- Quiz Confirmation Screen -->
         <div id="start-screen" class="hidden text-center p-4 sm:p-8">
             <h1 class="text-4xl sm:text-5xl font-bold mb-4">
@@ -633,21 +782,23 @@
                 <span class="efetiva-teal">DOCENTES</span>
             </h1>
             <p class="text-2xl font-semibold text-gray-700 mt-2">Pronto para Começar?</p>
-            
+
             <div class="max-w-md mx-auto bg-white mt-8 p-6 sm:p-8 rounded-lg shadow-lg">
                 <h2 class="text-2xl font-semibold mb-6 text-gray-800">Resumo do Simulado</h2>
-                
+
                 <div id="quiz-summary" class="space-y-4 text-left mb-6">
                     <!-- Summary will be populated by JavaScript -->
                 </div>
-                
+
                 <form id="start-form" class="space-y-4">
-                    <button type="submit" class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity text-lg">
+                    <button type="submit"
+                        class="mt-8 w-full efetiva-blue-bg text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transition-opacity text-lg">
                         🚀 Iniciar Simulado
                     </button>
                 </form>
-                
-                <button id="back-to-config" class="mt-4 w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">
+
+                <button id="back-to-config"
+                    class="mt-4 w-full bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">
                     ← Voltar às Configurações
                 </button>
             </div>
@@ -661,36 +812,46 @@
                         <h1 id="quiz-title" class="text-2xl sm:text-3xl font-bold efetiva-blue"></h1>
                         <p id="quiz-themes" class="text-lg text-gray-600 mt-1"></p>
                     </div>
-                    <div id="timer-display" class="text-2xl font-bold efetiva-blue bg-white px-4 py-2 rounded-lg shadow-md"></div>
+                    <div id="timer-display"
+                        class="text-2xl font-bold efetiva-blue bg-white px-4 py-2 rounded-lg shadow-md"></div>
                 </div>
             </header>
             <div id="question-navigation" class="question-nav-enhanced mb-6 p-4 bg-white rounded-lg shadow-md"></div>
 
             <div id="quiz-area" class="relative bg-white rounded-lg shadow-md p-6 md:p-8 mb-6">
                 <div id="highlighter-palette" class="flex space-x-2">
-                    <button class="w-6 h-6 rounded-full bg-yellow-200 border border-gray-300" data-color="highlight-yellow"></button>
-                    <button class="w-6 h-6 rounded-full bg-pink-200 border border-gray-300" data-color="highlight-pink"></button>
-                    <button class="w-6 h-6 rounded-full bg-blue-200 border border-gray-300" data-color="highlight-blue"></button>
-                    <button class="w-6 h-6 rounded-full bg-green-200 border border-gray-300" data-color="highlight-green"></button>
-                    <button id="remove-highlight-btn" class="w-6 h-6 rounded-full bg-gray-300 border border-gray-400 flex items-center justify-center text-red-600 font-bold">X</button>
+                    <button class="w-6 h-6 rounded-full bg-yellow-200 border border-gray-300"
+                        data-color="highlight-yellow"></button>
+                    <button class="w-6 h-6 rounded-full bg-pink-200 border border-gray-300"
+                        data-color="highlight-pink"></button>
+                    <button class="w-6 h-6 rounded-full bg-blue-200 border border-gray-300"
+                        data-color="highlight-blue"></button>
+                    <button class="w-6 h-6 rounded-full bg-green-200 border border-gray-300"
+                        data-color="highlight-green"></button>
+                    <button id="remove-highlight-btn"
+                        class="w-6 h-6 rounded-full bg-gray-300 border border-gray-400 flex items-center justify-center text-red-600 font-bold">X</button>
                 </div>
                 <div id="question-content"></div>
             </div>
 
             <div id="navigation-controls" class="flex justify-between items-center px-2">
-                <button id="prev-btn" class="efetiva-blue-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Anterior</button>
+                <button id="prev-btn"
+                    class="efetiva-blue-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Anterior</button>
                 <div class="flex gap-4">
-                     <button id="check-btn" class="efetiva-blue-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Verificar</button>
-                     <button id="next-btn" class="efetiva-teal-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Avançar</button>
+                    <button id="check-btn"
+                        class="efetiva-blue-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Verificar</button>
+                    <button id="next-btn"
+                        class="efetiva-teal-bg text-white font-bold py-2 px-6 rounded-lg shadow-md hover:opacity-90 transition-opacity">Avançar</button>
                 </div>
             </div>
-             <div class="text-center mt-8">
-                <button id="finish-btn" class="bg-gray-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-gray-800 transition-opacity">
+            <div class="text-center mt-8">
+                <button id="finish-btn"
+                    class="bg-gray-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-gray-800 transition-opacity">
                     Finalizar Simulado
                 </button>
             </div>
         </main>
-        
+
         <div id="final-screen" class="hidden text-center p-8 bg-white rounded-lg shadow-xl">
             <h2 class="text-4xl font-bold efetiva-blue mb-4">Desempenho Final</h2>
             <div class="md:flex md:items-center md:gap-8">
@@ -700,7 +861,8 @@
                 <div class="text-left flex-1">
                     <p id="score-text" class="text-2xl font-semibold text-gray-800 mb-4"></p>
                     <p id="final-message" class="text-lg text-gray-600 mb-8"></p>
-                    <button onclick="location.reload()" class="w-full efetiva-blue-bg text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
+                    <button onclick="location.reload()"
+                        class="w-full efetiva-blue-bg text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:opacity-90 transition-opacity">
                         Refazer Simulado
                     </button>
                 </div>
@@ -711,12 +873,11 @@
     <script>
         const simuladoNumero = 2;
         const simuladoAcronym = "PND";
-        
+
         // Configuration for Gemini API (user needs to add their API key)
-        const GEMINI_CONFIG = {
-            apiKey: 'AIzaSyA2IeHP0QVNs8i8FtGCegHwbOzo_Bks3pM', // User needs to add API key here
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
-        };
+        // ...
+        // Não precisamos mais do GEMINI_CONFIG no frontend!
+        // ...
 
         // Quiz Data Manager with dynamic generation capabilities
         class QuizDataManager {
@@ -727,9 +888,9 @@
 
             async getQuestions(config) {
                 const cacheKey = `${config.topic}_${config.difficulty}_${config.quantity}`;
-                
+
                 console.log('🔄 QuizDataManager.getQuestions called with config:', config);
-                
+
                 if (this.cache.has(cacheKey)) {
                     console.log('📋 Using cached questions');
                     return this.cache.get(cacheKey);
@@ -738,11 +899,11 @@
                 if (config.mode === 'dynamic' && GEMINI_CONFIG.apiKey) {
                     console.log('🤖 Attempting to generate dynamic questions with Gemini...');
                     console.log('🔑 API Key present:', !!GEMINI_CONFIG.apiKey);
-                    
+
                     try {
                         UIEnhancements.showToast('Gerando questões com IA...', 'info');
                         const questions = await this.generateDynamicQuestions(config);
-                        
+
                         if (questions && questions.length > 0) {
                             console.log(`✅ Generated ${questions.length} dynamic questions successfully`);
                             this.cache.set(cacheKey, questions);
@@ -769,7 +930,7 @@
 
             async generateDynamicQuestions(config) {
                 console.log('🔧 generateDynamicQuestions called with:', config);
-                
+                const apiUrl = '/api/gerar-questoes';
                 const topicMap = {
                     'didatica-geral': 'Didática Geral e Teorias de Aprendizagem',
                     'historia-educacao': 'História da Educação no Brasil e no Mundo',
@@ -826,23 +987,27 @@ Formato JSON exato:
                 console.log('🔗 URL:', GEMINI_CONFIG.baseURL);
 
                 try {
-                    const response = await fetch(GEMINI_CONFIG.baseURL, {
+                    const response = await fetch(apiUrl,{//GEMINI_CONFIG.baseURL, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
-                            'X-goog-api-key': GEMINI_CONFIG.apiKey
+                            //'X-goog-api-key': GEMINI_CONFIG.apiKey
                         },
                         body: JSON.stringify({
-                            contents: [{ 
-                                parts: [{ text: prompt }] 
-                            }],
-                            generationConfig: {
-                                temperature: 0.7,
-                                topK: 40,
-                                topP: 0.95,
-                                maxOutputTokens: 8192,
-                            }
+                            // Enviamos apenas o prompt para o nosso backend
+                            prompt: prompt 
                         })
+                        // body: JSON.stringify({
+                        //     contents: [{
+                        //         parts: [{ text: prompt }]
+                        //     }],
+                        //     generationConfig: {
+                        //         temperature: 0.7,
+                        //         topK: 40,
+                        //         topP: 0.95,
+                        //         maxOutputTokens: 8192,
+                        //     }
+                        // })
                     });
 
                     console.log('📡 Response status:', response.status);
@@ -863,7 +1028,7 @@ Formato JSON exato:
 
                     const content = data.candidates[0].content.parts[0].text;
                     console.log('📝 Generated content:', content.substring(0, 200) + '...');
-                    
+
                     // Try to extract and parse JSON
                     let jsonMatch = content.match(/\{[\s\S]*\}/);
                     if (!jsonMatch) {
@@ -879,7 +1044,7 @@ Formato JSON exato:
                         try {
                             const parsedData = JSON.parse(jsonMatch[0]);
                             console.log('✅ Successfully parsed JSON:', parsedData);
-                            
+
                             if (parsedData.questions && Array.isArray(parsedData.questions)) {
                                 console.log(`🎯 Generated ${parsedData.questions.length} questions`);
                                 return parsedData.questions;
@@ -907,11 +1072,11 @@ Formato JSON exato:
         async function testGeminiAPI() {
             console.log('🧪 Testing Gemini API...');
             UIEnhancements.showLoading('Testando API do Gemini...');
-            
+
             try {
                 const response = await fetch(GEMINI_CONFIG.baseURL, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'X-goog-api-key': GEMINI_CONFIG.apiKey
                     },
@@ -989,7 +1154,7 @@ Formato JSON exato:
                 toast.className = `toast toast-${type}`;
                 toast.textContent = message;
                 document.body.appendChild(toast);
-                
+
                 setTimeout(() => {
                     toast.style.opacity = '0';
                     setTimeout(() => toast.remove(), 300);
@@ -1014,7 +1179,7 @@ Formato JSON exato:
                 if (this.questionStartTime) {
                     const timeSpent = Date.now() - this.questionStartTime;
                     this.questionTimes[questionIndex] = timeSpent;
-                    
+
                     this.interactions.push({
                         question: questionIndex,
                         timeSpent,
@@ -1026,8 +1191,8 @@ Formato JSON exato:
 
             generateReport() {
                 const totalTime = Date.now() - this.startTime;
-                const averageTime = this.questionTimes.length > 0 
-                    ? this.questionTimes.reduce((a, b) => a + b, 0) / this.questionTimes.length 
+                const averageTime = this.questionTimes.length > 0
+                    ? this.questionTimes.reduce((a, b) => a + b, 0) / this.questionTimes.length
                     : 0;
 
                 return {
@@ -1093,7 +1258,7 @@ Formato JSON exato:
                 window.firebaseAuth.onAuthStateChanged(window.auth, (user) => {
                     this.currentUser = user;
                     this.isAuthenticated = !!user;
-                    
+
                     if (user) {
                         console.log('User logged in:', user.email);
                         this.handleUserLogin(user);
@@ -1113,10 +1278,10 @@ Formato JSON exato:
 
                 try {
                     UIEnhancements.showLoading('Criando conta...');
-                    
+
                     const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(window.auth, email, password);
                     const user = userCredential.user;
-                    
+
                     // Update user profile with name
                     await window.firebaseAuth.updateProfile(user, {
                         displayName: name
@@ -1133,12 +1298,12 @@ Formato JSON exato:
 
                     UIEnhancements.hideLoading();
                     UIEnhancements.showToast('Conta criada com sucesso!', 'success');
-                    
+
                     return { success: true, user };
                 } catch (error) {
                     UIEnhancements.hideLoading();
                     console.error('Registration error:', error);
-                    
+
                     let message = 'Erro ao criar conta. Tente novamente.';
                     if (error.code === 'auth/email-already-in-use') {
                         message = 'Este email já está em uso.';
@@ -1147,7 +1312,7 @@ Formato JSON exato:
                     } else if (error.code === 'auth/invalid-email') {
                         message = 'Email inválido.';
                     }
-                    
+
                     UIEnhancements.showToast(message, 'error');
                     return { success: false, error: message };
                 }
@@ -1162,21 +1327,21 @@ Formato JSON exato:
 
                 try {
                     UIEnhancements.showLoading('Fazendo login...');
-                    
+
                     const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
                     const user = userCredential.user;
-                    
+
                     // Update last login
                     await this.updateUserLastLogin(user.uid);
-                    
+
                     UIEnhancements.hideLoading();
                     UIEnhancements.showToast('Login realizado com sucesso!', 'success');
-                    
+
                     return { success: true, user };
                 } catch (error) {
                     UIEnhancements.hideLoading();
                     console.error('Login error:', error);
-                    
+
                     let message = 'Erro ao fazer login. Verifique suas credenciais.';
                     if (error.code === 'auth/user-not-found') {
                         message = 'Usuário não encontrado.';
@@ -1187,7 +1352,7 @@ Formato JSON exato:
                     } else if (error.code === 'auth/too-many-requests') {
                         message = 'Muitas tentativas. Tente novamente mais tarde.';
                     }
-                    
+
                     UIEnhancements.showToast(message, 'error');
                     return { success: false, error: message };
                 }
@@ -1207,7 +1372,7 @@ Formato JSON exato:
 
             async storeUserProfile(uid, userData) {
                 if (!window.db) return;
-                
+
                 try {
                     const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
                     await setDoc(doc(window.db, 'users', uid), userData);
@@ -1218,7 +1383,7 @@ Formato JSON exato:
 
             async updateUserLastLogin(uid) {
                 if (!window.db) return;
-                
+
                 try {
                     const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
                     await updateDoc(doc(window.db, 'users', uid), {
@@ -1231,7 +1396,7 @@ Formato JSON exato:
 
             async getUserProfile(uid) {
                 if (!window.db) return null;
-                
+
                 try {
                     const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
                     const docSnap = await getDoc(doc(window.db, 'users', uid));
@@ -1263,7 +1428,7 @@ Formato JSON exato:
             async showConfigScreen(user) {
                 // Get user profile data
                 const profile = await this.getUserProfile(user.uid);
-                
+
                 // Set current user with profile data
                 currentUser = {
                     uid: user.uid,
@@ -1272,14 +1437,14 @@ Formato JSON exato:
                     accessCode: profile?.accessCode || '',
                     isAuthenticated: true
                 };
-                
+
                 // Show config screen
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('user-screen').classList.add('hidden');
                 document.getElementById('config-screen').classList.remove('hidden');
-                
+
                 // Update welcome message and show logout button
-                document.getElementById('welcome-message').textContent = 
+                document.getElementById('welcome-message').textContent =
                     `Olá, ${currentUser.name.split(' ')[0]}! Configure seu simulado abaixo:`;
                 document.getElementById('logout-btn').classList.remove('hidden');
             }
@@ -1292,7 +1457,7 @@ Formato JSON exato:
 
             testFirebaseConfig() {
                 console.log('🔧 Testando configuração do Firebase...');
-                
+
                 const results = {
                     firebaseApp: !!window.firebaseApp,
                     auth: !!window.auth,
@@ -1313,7 +1478,7 @@ Formato JSON exato:
 
                 // Mostrar resultado visual
                 const status = results.firebaseApp && results.auth && results.firebaseAuth;
-                const message = status 
+                const message = status
                     ? `✅ Firebase configurado corretamente!\nProjeto: ${results.config?.projectId}`
                     : `❌ Firebase não configurado. Verifique:\n- Firebase App: ${results.firebaseApp}\n- Auth: ${results.auth}\n- FirebaseAuth: ${results.firebaseAuth}`;
 
@@ -1353,7 +1518,7 @@ Formato JSON exato:
                     if (accessCode) {
                         const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
                         const accessDoc = await getDoc(doc(window.db, 'accessCodes', accessCode));
-                        
+
                         if (!accessDoc.exists()) {
                             return { isValid: false, message: 'Código de acesso inválido' };
                         }
@@ -1361,9 +1526,9 @@ Formato JSON exato:
 
                     // Store user data
                     await this.storeUserData(name, email, accessCode);
-                    
-                    return { 
-                        isValid: true, 
+
+                    return {
+                        isValid: true,
                         userData: { name, email, accessCode },
                         message: 'Usuário validado com sucesso!'
                     };
@@ -1378,7 +1543,7 @@ Formato JSON exato:
 
                 try {
                     const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    
+
                     const userData = {
                         name,
                         email,
@@ -1388,10 +1553,10 @@ Formato JSON exato:
                     };
 
                     await addDoc(collection(window.db, 'userSessions'), userData);
-                    
+
                     // Store in localStorage for offline access
                     localStorage.setItem('currentUser', JSON.stringify(userData));
-                    
+
                 } catch (error) {
                     console.error('Error storing user data:', error);
                 }
@@ -1413,14 +1578,14 @@ Formato JSON exato:
 
                 try {
                     const { collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    
+
                     await addDoc(collection(window.db, 'quizResults'), {
                         userData,
                         config: quizConfig,
                         results,
                         timestamp: new Date()
                     });
-                    
+
                 } catch (error) {
                     console.error('Error storing quiz result:', error);
                 }
@@ -1476,7 +1641,7 @@ IV. O professor organiza um debate regrado sobre um tema polémico, atuando como
 São consideradas metodologias ativas as práticas descritas em:`,
                 options: ["III, apenas.", "I e II, apenas.", "I, II e IV, apenas.", "II e III, apenas.", "IV, apenas."],
                 correctAnswerIndex: 2,
-                justification:'<strong>Justificativa:</strong> As práticas I (Aprendizagem Baseada em Problemas), II (Sala de Aula Invertida) e IV (Debate) colocam o aluno numa posição ativa de pesquisa, colaboração e construção do conhecimento, com o professor a atuar como mediador, características centrais das metodologias ativas. A prática III representa o modelo tradicional de transmissão, onde o aluno é um receptor passivo.'
+                justification: '<strong>Justificativa:</strong> As práticas I (Aprendizagem Baseada em Problemas), II (Sala de Aula Invertida) e IV (Debate) colocam o aluno numa posição ativa de pesquisa, colaboração e construção do conhecimento, com o professor a atuar como mediador, características centrais das metodologias ativas. A prática III representa o modelo tradicional de transmissão, onde o aluno é um receptor passivo.'
             },
             {
                 questionNumber: 3,
@@ -1667,7 +1832,7 @@ Estão corretas apenas as assertivas:`,
                 // Login form
                 document.getElementById('login-form-element').addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    
+
                     const email = document.getElementById('login-email').value;
                     const password = document.getElementById('login-password').value;
 
@@ -1681,7 +1846,7 @@ Estão corretas apenas as assertivas:`,
                 // Register form
                 document.getElementById('register-form-element').addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    
+
                     const name = document.getElementById('register-name').value;
                     const email = document.getElementById('register-email').value;
                     const password = document.getElementById('register-password').value;
@@ -1705,7 +1870,7 @@ Estão corretas apenas as assertivas:`,
             // User identification handler
             userForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
+
                 const name = document.getElementById('student-name').value;
                 const email = document.getElementById('student-email').value;
                 const accessCode = document.getElementById('access-code').value;
@@ -1714,20 +1879,20 @@ Estão corretas apenas as assertivas:`,
 
                 try {
                     const validation = await firebaseManager.validateUser(name, email, accessCode);
-                    
+
                     UIEnhancements.hideLoading();
 
                     if (validation.isValid) {
                         currentUser = validation.userData;
-                        
+
                         // Show config screen
                         userScreen.style.display = 'none';
                         configScreen.classList.remove('hidden');
-                        
+
                         // Update welcome message
-                        document.getElementById('welcome-message').textContent = 
+                        document.getElementById('welcome-message').textContent =
                             `Olá, ${name.split(' ')[0]}! Configure seu simulado abaixo:`;
-                        
+
                         UIEnhancements.showToast(validation.message || 'Usuário validado!', 'success');
                     } else {
                         UIEnhancements.showToast(validation.message, 'error');
@@ -1738,12 +1903,13 @@ Estão corretas apenas as assertivas:`,
                     console.error('User validation error:', error);
                 }
             });
-            
+
             // Quiz state variables
             let currentQuestionIndex = 0;
             let userAnswers = [];
             let verifiedAnswers = [];
             let questionStates = [];
+            let strikethroughStates = []; // Adicionar esta linha
             let scoreChart = null;
             let timerInterval = null;
             let timeRemaining = 0;
@@ -1788,7 +1954,7 @@ Estão corretas apenas as assertivas:`,
                     modeStatic.classList.remove('active');
                     quizConfig.mode = 'dynamic';
                     modeDescription.textContent = 'Questões geradas por IA baseadas no tema selecionado';
-                    
+
                     if (!GEMINI_CONFIG.apiKey) {
                         UIEnhancements.showToast('Configure a API key do Gemini para usar o modo dinâmico', 'info');
                     }
@@ -1832,30 +1998,31 @@ Estão corretas apenas as assertivas:`,
                 const startConfigBtn = document.getElementById('start-config-btn');
                 startConfigBtn.addEventListener('click', async () => {
                     UIEnhancements.showLoading('Preparando questões...');
-                    
+
                     try {
                         // Get questions based on configuration
                         quizData = await quizDataManager.getQuestions(quizConfig);
-                        
+
                         // Initialize quiz state
                         userAnswers = new Array(quizData.length).fill(null);
                         verifiedAnswers = new Array(quizData.length).fill(false);
+                        strikethroughStates = quizData.map(q => new Array(q.options.length).fill(false)); // Adicionar esta linha
                         questionStates = quizData.map(q => ({
                             baseTextHTML: q.baseText,
                             enunciadoHTML: q.enunciado
                         }));
 
                         UIEnhancements.hideLoading();
-                        
+
                         // Show confirmation screen
                         configScreen.style.display = 'none';
                         startScreen.classList.remove('hidden');
-                        
+
                         // Update quiz summary
                         updateQuizSummary();
 
                         UIEnhancements.showToast(`${quizData.length} questões carregadas com sucesso!`, 'success');
-                        
+
                     } catch (error) {
                         UIEnhancements.hideLoading();
                         UIEnhancements.showToast('Erro ao carregar questões. Tente novamente.', 'error');
@@ -1927,7 +2094,7 @@ Estão corretas apenas as assertivas:`,
                 startScreen.style.display = 'none';
                 quizDashboard.classList.remove('hidden');
                 quizTitleElement.innerHTML = `Simulado N° ${simuladoNumero} - ${simuladoAcronym}`;
-                
+
                 const topicNames = {
                     'didatica-geral': 'Didática Geral',
                     'historia-educacao': 'História da Educação',
@@ -1936,8 +2103,8 @@ Estão corretas apenas as assertivas:`,
                     'avaliacao-educacional': 'Avaliação Educacional',
                     'legislacao-educacional': 'Legislação Educacional'
                 };
-                
-                if(quizThemesElement) {
+
+                if (quizThemesElement) {
                     quizThemesElement.textContent = `${topicNames[quizConfig.topic]} - ${quizConfig.difficulty.toUpperCase()} - ${quizData.length} questões`;
                 }
 
@@ -1946,17 +2113,17 @@ Estão corretas apenas as assertivas:`,
                 } else {
                     timerDisplay.style.display = 'none';
                 }
-                
+
                 // Start analytics tracking
                 quizAnalytics = new QuizAnalytics();
-                
+
                 init();
             });
 
             // Test Gemini API function
             async function testGeminiAPI() {
                 console.log('🧪 Testing Gemini API...');
-                
+
                 if (!GEMINI_CONFIG.apiKey) {
                     UIEnhancements.showToast('❌ API key do Gemini não configurada', 'error');
                     alert('❌ API key do Gemini não está configurada!\n\nConfigurações atuais:\n- API Key: não definida\n- Base URL: ' + GEMINI_CONFIG.baseURL);
@@ -1974,11 +2141,11 @@ Estão corretas apenas as assertivas:`,
                     };
 
                     console.log('🔧 Testing with config:', testConfig);
-                    
+
                     const result = await quizDataManager.generateDynamicQuestions(testConfig);
-                    
+
                     UIEnhancements.hideLoading();
-                    
+
                     if (result && result.length > 0) {
                         UIEnhancements.showToast(`✅ Gemini API funcionando! ${result.length} questões geradas`, 'success');
                         console.log('✅ Test successful:', result);
@@ -2061,7 +2228,7 @@ Estão corretas apenas as assertivas:`,
             function renderQuestion(index) {
                 // Track question start for analytics
                 quizAnalytics.trackQuestionStart(index);
-                
+
                 const q = quizData[index];
                 const state = questionStates[index];
                 const isVerified = verifiedAnswers[index];
@@ -2074,8 +2241,12 @@ Estão corretas apenas as assertivas:`,
                     } else if (i === userAnswers[index]) {
                         optionClass = 'option-selected';
                     }
+
+                    // Adiciona a classe de riscado se o estado for verdadeiro
+                    const strikethroughClass = strikethroughStates[index][i] ? 'strikethrough' : '';
+
                     return `
-                        <div class="option-item flex items-center p-4 rounded-lg cursor-pointer ${optionClass}" data-index="${i}">
+                        <div class="option-item flex items-center p-4 rounded-lg cursor-pointer ${optionClass} ${strikethroughClass}" data-index="${i}">
                             <span class="strikethrough-btn text-gray-400 font-bold mr-4 cursor-pointer hover:text-red-500 text-lg">X</span>
                             <span class="flex-1 option-text">${String.fromCharCode(65 + i)}) ${option}</span>
                         </div>`;
@@ -2099,10 +2270,28 @@ Estão corretas apenas as assertivas:`,
                 if (!isVerified) {
                     questionContent.querySelectorAll('.option-item').forEach(item => {
                         item.addEventListener('click', (e) => {
+                            const optionIndex = parseInt(item.dataset.index);
+
                             if (e.target.classList.contains('strikethrough-btn')) {
-                                e.currentTarget.classList.toggle('strikethrough');
+                                // Alterna o estado de riscado
+                                strikethroughStates[index][optionIndex] = !strikethroughStates[index][optionIndex];
+
+                                // Se a alternativa riscada era a selecionada, desmarca ela
+                                if (userAnswers[index] === optionIndex) {
+                                    userAnswers[index] = null;
+                                }
+
+                                // Renderiza a questão novamente para mostrar as mudanças
+                                renderQuestion(index);
                             } else {
-                                userAnswers[index] = parseInt(item.dataset.index);
+                                // Comportamento normal de seleção de alternativa
+                                userAnswers[index] = optionIndex;
+
+                                // Se o usuário selecionar uma alternativa riscada, remove o risco
+                                if (strikethroughStates[index][optionIndex]) {
+                                    strikethroughStates[index][optionIndex] = false;
+                                }
+
                                 renderQuestion(index);
                             }
                         });
@@ -2111,7 +2300,7 @@ Estão corretas apenas as assertivas:`,
                 updateNavButtons();
                 updateNavStatus();
             }
-            
+
             function setupHighlighter() {
                 const quizArea = document.getElementById('quiz-area');
                 let currentRange;
@@ -2147,8 +2336,8 @@ Estão corretas apenas as assertivas:`,
                     highlighterPalette.style.display = 'flex';
                     highlighterPalette.querySelector('#remove-highlight-btn').style.display = isRemoval ? 'flex' : 'none';
                     highlighterPalette.dataset.targetSpan = isRemoval ? 'true' : 'false';
-                    if(isRemoval) {
-                         highlighterPalette.targetSpan = targetSpan;
+                    if (isRemoval) {
+                        highlighterPalette.targetSpan = targetSpan;
                     }
                 }
 
@@ -2181,7 +2370,7 @@ Estão corretas apenas as assertivas:`,
                                 }
                             }
                         }
-                        
+
                         saveHighlights();
                         window.getSelection().removeAllRanges();
                         hidePalette();
@@ -2206,20 +2395,20 @@ Estão corretas apenas as assertivas:`,
                     UIEnhancements.showToast('Por favor, selecione uma resposta.', 'error');
                     return;
                 }
-                
+
                 const isCorrect = userAnswers[index] === quizData[index].correctAnswerIndex;
                 verifiedAnswers[index] = true;
-                
+
                 // Track answer for analytics
                 quizAnalytics.trackQuestionEnd(index, isCorrect);
-                
+
                 // Show feedback
                 if (isCorrect) {
                     UIEnhancements.showToast('Resposta correta! 🎉', 'success');
                 } else {
                     UIEnhancements.showToast('Resposta incorreta. Veja a justificativa.', 'error');
                 }
-                
+
                 renderQuestion(index);
             });
 
@@ -2247,7 +2436,7 @@ Estão corretas apenas as assertivas:`,
             finishBtn.addEventListener('click', () => {
                 showFinalScreen();
             });
-            
+
             function showFinalScreen() {
                 clearInterval(timerInterval);
                 quizDashboard.style.display = 'none';
@@ -2289,7 +2478,7 @@ Estão corretas apenas as assertivas:`,
                 }
 
                 const ctx = document.getElementById('scoreChart').getContext('2d');
-                if(scoreChart) scoreChart.destroy();
+                if (scoreChart) scoreChart.destroy();
                 scoreChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -2318,7 +2507,7 @@ Estão corretas apenas as assertivas:`,
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                         const percentage = Math.round((context.raw / total) * 100);
                                         return `${context.label}: ${context.raw} (${percentage}%)`;
@@ -2352,4 +2541,5 @@ Estão corretas apenas as assertivas:`,
         });
     </script>
 </body>
+
 </html>
